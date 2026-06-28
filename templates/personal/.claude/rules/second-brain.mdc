@@ -1,0 +1,56 @@
+---
+description: User has a personal second brain at ~/second-brain/. Apply ONLY when the user explicitly invokes a brain trigger — "capture", "remember this", "process inbox", "weekly review", "journal", "search my brain", "what do I know about", "ingest", "lint the brain", "grill me", "exit ritual", "start a new job", "bootstrap a company brain", "create a new skill" — or directly references "my brain", "second brain", or "my vault". Do not apply to general coding, debugging, or unrelated questions.
+---
+
+# Second Brain — User-Level Pointer
+
+The user keeps a personal second brain (Karpathy LLM-wiki style) at `~/second-brain/`. It's the source of truth for personal captures, journals, projects, areas, goals, knowledge notes, people, and career history. Treat it as the user's persistent memory.
+
+The vault has its own operating contract at `~/second-brain/.claude/agents/second-brain.md` (the **second-brain** sub-agent). **Read that file** before doing anything in the vault — it defines layout, conventions, sensitivity rules, and the work-vs-personal boundary. The rules in there override anything in this pointer. Root `AGENTS.md` is a thin pointer to the same file.
+
+## Working from outside the vault
+
+Skills are intentionally **not** symlinked at user level (to keep every non-brain session's context small). When a trigger fires from a session whose CWD is not `~/second-brain/`:
+
+1. **Read** the relevant skill file at `~/second-brain/.claude/skills/<name>/SKILL.MD` (lookup table below). That file has the full step-by-step process.
+2. The skill's instructions assume CWD = vault root. Use absolute paths or `cd ~/second-brain` before running file operations against the vault.
+3. Templates live at `~/second-brain/brain/templates/`.
+4. After writing into the vault, list the file paths in your reply so the user can verify.
+
+## Triggers → Skills
+
+| User says… | Skill at `~/second-brain/.claude/skills/<name>/SKILL.MD` |
+|---|---|
+| "capture …", "remember this", "save to inbox", "jot this down" | `capture` |
+| "process my inbox", "sort inbox", "clean inbox" | `process-inbox` |
+| "weekly review", "Sunday review" | `weekly-review` |
+| "journal", "daily entry", "today's entry" | `daily-journal` |
+| "what do I know about X", "search my brain" | `search-brain` |
+| "ingest", "distill raw/…", "process this article" | `ingest-source` |
+| "lint the brain", "find orphans", "what's rotting" | `lint-vault` |
+| "grill me on this plan" | `grill-me` |
+| "start a new job", "bootstrap a company brain", "set up a work brain" | `bootstrap-company-brain` |
+| "create a new skill" | `write-a-skill` |
+| "add word", "add vocab", "add to dictionary", "define word for PTE" | `vocab-add` |
+
+Quick-lookup cheat sheet: `~/second-brain/CHEATSHEET.md`.
+
+## Company brains (work-specific, separate)
+
+Company-specific content does **not** belong in the personal brain. Each employer gets its own repo at `~/work/<company>/` (created by `bootstrap-company-brain`). Each company repo has its own `AGENTS.md` with **different rules** (real names allowed there; anonymization rules don't apply inside it).
+
+Hard rule: **never write company-specific content** (employer/product/customer names, internal tools, quoted coworkers, comp/review content, business numbers, strategy/roadmap detail, credentials) into the personal brain. If the user pastes anything that looks company-specific while CWD is anywhere other than `~/work/<company>/`, pause and follow the **Sensitivity flow** in `~/second-brain/.claude/skills/capture/SKILL.MD`.
+
+## When the brain isn't installed on this machine
+
+If `~/second-brain/` does not exist, tell the user:
+
+> Your second brain isn't installed on this machine. Bring it up with `brain-up`:
+>
+> ```bash
+> BRAIN_REPO=<your-brain-repo> ~/brain-up/up.sh
+> ```
+>
+> (or scaffold a fresh one: `~/brain-up/up.sh --init --type personal --target ~/second-brain`)
+>
+> Then any Cursor or Claude Code session on this machine will know about it.

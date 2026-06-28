@@ -1,0 +1,7 @@
+---
+description: Apply when user asks to capture work notes, run weekly review, process inbox, or prepare handoff from this work brain.
+---
+
+# Work Brain Router
+
+When operating this work brain, write notes under `brain/` and stage portable anonymized summaries under `handoff/`.

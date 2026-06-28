@@ -1,0 +1,38 @@
+# macOS
+.DS_Store
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Claude Code — keep agents/rules/skills tracked, ignore transient state
+.claude/worktrees/
+.claude/settings.local.json
+
+# Extra-sensitive notes
+private/
+**/private/
+private-*.md
+**/private-*.md
+
+# Credentials and secrets — never commit
+.env
+.env.*
+*.pem
+*.key
+credentials.json
+secrets.yml
+secrets.yaml
+
+# Scratch / drafts
+scratch/
+*.draft.md
+
+# Bulk raw artifacts — uncomment if you want transcripts, exports, recordings
+# kept on disk but out of git history (storage / exfil considerations).
+# raw/large/
+# raw/**/*.mp3
+# raw/**/*.mp4
+# raw/**/*.wav

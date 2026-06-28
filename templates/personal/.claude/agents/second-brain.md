@@ -168,7 +168,7 @@ Available skills:
 1. If the user shares a thought with no clear instruction → assume **capture** (put it in `brain/inbox/`), then confirm.
 2. If the user asks about himself/his work → **search-brain** first; only answer from the repo unless explicitly asked for an outside view.
 3. If you create or move a file, list it at the end of your response so the user can verify.
-4. Never commit or push unless the user asks. When asked to commit changes: summarize the files changed and show a brief diff or description for the user to review first. Only push after receiving explicit approval. When pushing, push directly to `main` — no feature branch, no PR.
+4. Never commit or push unless the user asks. Before editing files for any task, pull latest `main` into the sandbox first (`git pull --rebase origin main`) to avoid conflicts. When asked to commit changes: summarize the files changed and show a brief diff or description for the user to review first. Only push after receiving explicit approval. When pushing, push directly to `main` — no feature branch, no PR. If a push is rejected because `main` moved, pull/rebase and retry (never force-push).
 
 ## Company Information — Hard Boundary
 

@@ -28,8 +28,15 @@ Usage:
   # Sync mode (default): clone (if needed), pull, link rules
   up.sh
 
-  # Init mode: scaffold a new standalone brain repo, then link rules
+  # Init mode: scaffold or update a brain repo from templates, then link rules.
+  # NON-DESTRUCTIVE by default: only missing files are added; existing files
+  # are left exactly as they are.
   up.sh --init --type <personal|company> --target <path> [--name <name>] [--git-init] [--force]
+
+Init flags:
+  --force   Overwrite existing files with fresh template copies (DESTRUCTIVE).
+            Always prompts for confirmation before overwriting anything.
+  --git-init  Run `git init` in the target if it is not already a repo.
 
 Env vars (sync mode):
   BRAIN       default: ~/second-brain
@@ -95,25 +102,62 @@ error: clone failed.
 EOF
 }
 
-# Copy a template tree's contents (including dotfiles) into the target dir.
+# Paths of files actually written by copy_template, for targeted placeholder
+# substitution (so existing/untouched files are never rewritten).
+COPIED_FILES=()
+
+# Copy a template tree (including dotfiles) into the target, file by file.
+#   mode=merge (default) -> skip files that already exist; never overwrite.
+#   mode=force           -> overwrite existing files with the template copy.
+# Every file written is appended to COPIED_FILES.
 copy_template() {
   local src="$1"
   local dst="$2"
+  local mode="${3:-merge}"
   [[ -d "$src" ]] || return 0
-  # The trailing /. copies the directory contents, hidden files included.
-  cp -R "$src/." "$dst/"
+  local f rel out
+  while IFS= read -r -d '' f; do
+    rel="${f#"$src"/}"
+    out="$dst/$rel"
+    if [[ -e "$out" && "$mode" != "force" ]]; then
+      echo "  skip     $rel (exists)"
+      continue
+    fi
+    mkdir -p "$(dirname "$out")"
+    if [[ -e "$out" ]]; then
+      echo "  overwrite $rel"
+    else
+      echo "  add      $rel"
+    fi
+    cp "$f" "$out"
+    COPIED_FILES+=( "$out" )
+  done < <(find "$src" -type f -print0)
 }
 
-# Replace {{NAME}} and {{DATE}} placeholders across every file under the target.
-substitute_placeholders() {
-  local root="$1"
-  local name="$2"
-  local today="$3"
-  local f
+# Print (relative) template files that already exist under dst -- i.e. the files
+# a --force would overwrite.
+list_overwrites() {
+  local src="$1"
+  local dst="$2"
+  [[ -d "$src" ]] || return 0
+  local f rel
   while IFS= read -r -d '' f; do
+    rel="${f#"$src"/}"
+    [[ -e "$dst/$rel" ]] && printf '%s\n' "$rel"
+  done < <(find "$src" -type f -print0)
+}
+
+# Replace {{NAME}} and {{DATE}} placeholders in the given files.
+substitute_placeholders() {
+  local name="$1"
+  local today="$2"
+  shift 2
+  local f
+  for f in "$@"; do
+    [[ -f "$f" ]] || continue
     sed -e "s|{{NAME}}|${name}|g" -e "s|{{DATE}}|${today}|g" "$f" > "$f.brainup.tmp"
     mv "$f.brainup.tmp" "$f"
-  done < <(find "$root" -type f -print0)
+  done
 }
 
 link_rules() {
@@ -222,24 +266,49 @@ EOF
       echo "error: target exists and is not a directory: $target" >&2
       exit 1
     fi
-    if [[ "$INIT_FORCE" != "true" ]] && [[ -n "$(ls -A "$target")" ]]; then
-      echo "error: target directory is not empty: $target" >&2
-      echo "       re-run with --force to continue." >&2
-      exit 1
-    fi
   else
     mkdir -p "$target"
   fi
+
+  local copy_mode="merge"
+  [[ "$INIT_FORCE" == "true" ]] && copy_mode="force"
 
   echo "Init"
   echo "  type:     $INIT_TYPE"
   echo "  target:   $target"
   echo "  name:     $name"
+  echo "  mode:     $copy_mode"
+
+  # --force is destructive: warn about every existing file it would overwrite
+  # and always require explicit confirmation before touching anything.
+  if [[ "$INIT_FORCE" == "true" ]]; then
+    local overwrites
+    overwrites="$( { list_overwrites "$TEMPLATES_DIR/common" "$target"
+                     list_overwrites "$TEMPLATES_DIR/$INIT_TYPE" "$target"; } | sort -u )"
+    if [[ -n "$overwrites" ]]; then
+      echo >&2
+      echo "WARNING: --force will OVERWRITE these existing files:" >&2
+      printf '%s\n' "$overwrites" | sed 's/^/  /' >&2
+      echo >&2
+      printf "Type 'force' to confirm overwriting the files above: " >&2
+      local reply=""
+      read -r reply || true
+      if [[ "$reply" != "force" ]]; then
+        echo "aborted: overwrite not confirmed (no files changed)." >&2
+        exit 1
+      fi
+    fi
+  fi
 
   # Common layout first, then the type-specific overlay on top.
-  copy_template "$TEMPLATES_DIR/common" "$target"
-  copy_template "$TEMPLATES_DIR/$INIT_TYPE" "$target"
-  substitute_placeholders "$target" "$name" "$today"
+  COPIED_FILES=()
+  echo
+  echo "Files"
+  copy_template "$TEMPLATES_DIR/common" "$target" "$copy_mode"
+  copy_template "$TEMPLATES_DIR/$INIT_TYPE" "$target" "$copy_mode"
+  if [[ ${#COPIED_FILES[@]} -gt 0 ]]; then
+    substitute_placeholders "$name" "$today" "${COPIED_FILES[@]}"
+  fi
 
   if [[ "$INIT_GIT" == "true" ]]; then
     (
@@ -249,7 +318,12 @@ EOF
     echo "  git:      initialized"
   fi
 
-  echo "Initialized $INIT_TYPE brain at: $target"
+  echo
+  if [[ "$copy_mode" == "force" ]]; then
+    echo "Reset $INIT_TYPE brain at: $target (${#COPIED_FILES[@]} file(s) written)."
+  else
+    echo "Updated $INIT_TYPE brain at: $target (${#COPIED_FILES[@]} new file(s) added; existing files untouched)."
+  fi
 
   BRAIN="$target"
   RULES_DIR="$BRAIN/.claude/rules"

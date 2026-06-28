@@ -7,7 +7,7 @@
 set -euo pipefail
 
 MODE="sync"
-INIT_TYPE=""
+INIT_TYPE="personal"
 INIT_TARGET=""
 INIT_NAME=""
 INIT_GIT=false
@@ -16,6 +16,12 @@ INIT_FORCE=false
 # Directory containing this script (and the templates/ folder next to it).
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd || true)"
 TEMPLATES_DIR="${TEMPLATES_DIR:-${SCRIPT_DIR}/templates}"
+
+# Source repo for templates when they aren't available locally (e.g. when this
+# script is run via `curl ... | bash`). Used by init mode to self-fetch.
+TEMPLATES_REPO="${TEMPLATES_REPO:-hqtoan94/brain-up}"
+TEMPLATES_REF="${TEMPLATES_REF:-main}"
+TEMPLATES_TMP=""
 
 BRAIN="${BRAIN:-$HOME/second-brain}"
 BRAIN_REPO="${BRAIN_REPO:-}"
@@ -28,15 +34,22 @@ Usage:
   # Sync mode (default): clone (if needed), pull, link rules
   up.sh
 
-  # Init mode: scaffold or update a brain repo from templates, then link rules.
-  # NON-DESTRUCTIVE by default: only missing files are added; existing files
-  # are left exactly as they are.
-  up.sh --init --type <personal|company> --target <path> [--name <name>] [--git-init] [--force]
+  # Init mode: scaffold a new brain from templates, then link rules.
+  # Creates the brain only -- it does NOT touch git (use --git-init or set up
+  # version control yourself later). NON-DESTRUCTIVE by default: only missing
+  # files are added; existing files are left exactly as they are.
+  up.sh --init [--type <personal|company>] [--target <path>] [--name <name>] [--git-init] [--force]
 
-Init flags:
-  --force   Overwrite existing files with fresh template copies (DESTRUCTIVE).
-            Always prompts for confirmation before overwriting anything.
-  --git-init  Run `git init` in the target if it is not already a repo.
+Init flags (all optional):
+  --type      personal | company   (default: personal)
+  --target    output directory     (default: ~/second-brain, i.e. $BRAIN)
+  --name      display name         (default: target folder name)
+  --git-init  run `git init` in the target if it is not already a repo
+  --force     overwrite existing files with fresh template copies (DESTRUCTIVE);
+              always prompts for confirmation before overwriting anything
+
+If the bundled templates/ are not next to this script (e.g. when running via
+`curl ... | bash`), init mode downloads them from the brain-up repo.
 
 Env vars (sync mode):
   BRAIN       default: ~/second-brain
@@ -45,7 +58,9 @@ Env vars (sync mode):
   TARGETS     default: claude,cursor (supported: claude,cursor)
 
 Env vars (init mode):
-  TEMPLATES_DIR  default: <script dir>/templates
+  TEMPLATES_DIR   default: <script dir>/templates
+  TEMPLATES_REPO  default: hqtoan94/brain-up  (used when templates are fetched)
+  TEMPLATES_REF   default: main               (branch/tag to fetch)
 EOF
 }
 
@@ -233,25 +248,51 @@ link_rules() {
   fi
 }
 
-run_init_mode() {
-  if [[ -z "$INIT_TYPE" ]]; then
-    echo "error: --type is required in --init mode." >&2
-    usage
+# Ensure a usable templates/ tree exists. If the bundled templates aren't next
+# to this script (e.g. when running via `curl ... | bash`), download the
+# brain-up repo into a temp dir and point TEMPLATES_DIR at it.
+ensure_templates() {
+  if [[ -d "$TEMPLATES_DIR/common" ]]; then
+    return 0
+  fi
+
+  command -v curl >/dev/null 2>&1 || { echo "error: 'curl' is required to fetch templates." >&2; exit 1; }
+  command -v tar  >/dev/null 2>&1 || { echo "error: 'tar' is required to fetch templates." >&2; exit 1; }
+
+  TEMPLATES_TMP="$(mktemp -d "${TMPDIR:-/tmp}/brainup.XXXXXX")"
+  local url="https://github.com/${TEMPLATES_REPO}/archive/refs/heads/${TEMPLATES_REF}.tar.gz"
+  echo "Templates not found locally; fetching from $url ..."
+  if ! curl -fsSL "$url" | tar -xz -C "$TEMPLATES_TMP"; then
+    echo "error: failed to download templates from $url" >&2
     exit 1
   fi
+
+  local d extracted=""
+  for d in "$TEMPLATES_TMP"/*/templates; do
+    [[ -d "$d" ]] && { extracted="$d"; break; }
+  done
+  if [[ -z "$extracted" ]]; then
+    echo "error: downloaded archive did not contain a templates/ directory." >&2
+    exit 1
+  fi
+  TEMPLATES_DIR="$extracted"
+}
+
+cleanup_templates_tmp() {
+  [[ -n "$TEMPLATES_TMP" && -d "$TEMPLATES_TMP" ]] && rm -rf "$TEMPLATES_TMP"
+}
+trap cleanup_templates_tmp EXIT
+
+run_init_mode() {
   if [[ "$INIT_TYPE" != "personal" && "$INIT_TYPE" != "company" ]]; then
     echo "error: --type must be personal or company." >&2
     exit 1
   fi
 
-  if [[ ! -d "$TEMPLATES_DIR/common" || ! -d "$TEMPLATES_DIR/$INIT_TYPE" ]]; then
-    cat >&2 <<EOF
-error: templates not found at: $TEMPLATES_DIR
-  init mode needs the templates/ folder shipped with brain-up.
-  clone the repo first, e.g.:
-    git clone https://github.com/hqtoan94/brain-up.git
-    ./brain-up/up.sh --init --type $INIT_TYPE --target <path>
-EOF
+  ensure_templates
+
+  if [[ ! -d "$TEMPLATES_DIR/$INIT_TYPE" ]]; then
+    echo "error: template type not found: $TEMPLATES_DIR/$INIT_TYPE" >&2
     exit 1
   fi
 

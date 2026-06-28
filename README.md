@@ -55,30 +55,70 @@ They run concurrently and independently. The **only** path between them is one-w
 
 ## Quick start
 
-### Bring up an existing brain
+The fastest start is to **create a brand-new brain locally** — no GitHub repo required. You can add git and push to a remote whenever you're ready.
+
+### Create a new brain
+
+Two ways to do it. Both just **create the brain on disk** — they don't touch git, so you can set up version control later (see below).
+
+**Option A — remote one-liner** (nothing to clone; templates are fetched automatically):
 
 ```bash
-# get brain-up
+# personal brain at ~/second-brain (the defaults)
+curl -fsSL https://raw.githubusercontent.com/hqtoan94/brain-up/main/up.sh | bash -s -- --init
+
+# or pick type / location / name
+curl -fsSL https://raw.githubusercontent.com/hqtoan94/brain-up/main/up.sh \
+  | bash -s -- --init --type company --target ~/work/acme --name "Acme Work Brain"
+```
+
+**Option B — manual** (clone `brain-up`, then run the local script):
+
+```bash
 git clone https://github.com/hqtoan94/brain-up.git ~/brain-up
 
-# first run on a machine clones your brain, then links its rules into Cursor/Claude
-BRAIN_REPO=https://github.com/<your-username>/<your-brain-repo>.git ~/brain-up/up.sh
+# personal brain at ~/second-brain (the defaults)
+~/brain-up/up.sh --init
 
-# every run after: pull + relink
-~/brain-up/up.sh
+# or pick type / location / name
+~/brain-up/up.sh --init --type company --target ~/work/acme --name "Acme Work Brain"
 ```
 
-### Mint a brand-new brain from scratch
-
-```bash
-# a personal second brain
-~/brain-up/up.sh --init --type personal --target ~/second-brain --name "Second Brain" --git-init
-
-# a company brain (keep on the work device)
-~/brain-up/up.sh --init --type company --target ~/work/acme --name "Acme Work Brain" --git-init
-```
+Defaults: `--type personal`, `--target ~/second-brain`, `--name` = the target folder name.
 
 `--init` copies the boilerplate from [`templates/`](templates/), fills in `{{NAME}}`/`{{DATE}}`, and links the rules immediately. Then open the folder in Cursor or Claude Code — the agent auto-loads `AGENTS.md` and you can `capture`, `journal`, `weekly review`, `ingest`, and more on day one.
+
+Re-running `--init` is non-destructive: it only adds missing files and never touches your existing ones.
+
+### Version control is optional (do it later)
+
+You don't need a git repo to use a brain. When you want history and backups, turn the folder into one — either pass `--git-init` when creating it, or set it up yourself afterwards:
+
+```bash
+cd ~/second-brain
+git init
+git add -A && git commit -m "Initialize my brain"
+# then, when you have a remote:
+git remote add origin https://github.com/<your-username>/<your-brain-repo>.git
+git push -u origin main
+```
+
+### Already have a brain in a git repo?
+
+Bring it up on any machine — clone (first run) + pull + relink in one step. Run it remotely, with nothing to install:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/hqtoan94/brain-up/main/up.sh \
+  | BRAIN_REPO=https://github.com/<your-username>/<your-brain-repo>.git bash
+```
+
+…or with a local clone of `brain-up`:
+
+```bash
+# first run clones your brain; every run after is pull + relink
+BRAIN_REPO=https://github.com/<your-username>/<your-brain-repo>.git ~/brain-up/up.sh
+~/brain-up/up.sh
+```
 
 ---
 
@@ -92,7 +132,7 @@ BRAIN_REPO=https://github.com/<your-username>/<your-brain-repo>.git ~/brain-up/u
 2. **Pull** — `git pull --ff-only`, skipped cleanly if just-cloned, no upstream, or the tree is dirty.
 3. **Link rules** — symlink every rule into user-level config so any project on the machine can route brain triggers here.
 
-**Init mode (`--init`):** scaffold a new standalone brain from `templates/`, then link its rules.
+**Init mode (`--init`):** scaffold a new standalone brain from `templates/`, then link its rules. It only creates the brain — it never touches git. If the bundled `templates/` aren't next to the script (e.g. when piped via `curl | bash`), it downloads them from the `brain-up` repo first. Re-running is non-destructive — it adds only missing files and leaves existing ones untouched; pass `--force` to overwrite from templates (it lists the affected files and asks for confirmation first).
 
 ### Why link only rules, not skills?
 
@@ -117,17 +157,19 @@ If the target app config dirs exist:
 | `BRAIN_REPO` | _(empty)_ | clone URL, used when `BRAIN` doesn't exist yet |
 | `RULES_DIR` | `$BRAIN/.claude/rules` | source rules directory to link from |
 | `TARGETS` | `claude,cursor` | which app configs to link into |
-| `TEMPLATES_DIR` | `<script dir>/templates` | template source for `--init` |
+| `TEMPLATES_DIR` | `<script dir>/templates` | local template source for `--init` |
+| `TEMPLATES_REPO` | `hqtoan94/brain-up` | repo to fetch templates from when none are local |
+| `TEMPLATES_REF` | `main` | branch/tag to fetch templates from |
 
 ### `--init` flags
 
-| Flag | Required | Meaning |
+| Flag | Default | Meaning |
 |---|---|---|
-| `--type <personal\|company>` | yes | which brain to scaffold |
-| `--target <path>` | yes | output directory |
-| `--name <name>` | no | display name (defaults to folder name) |
-| `--git-init` | no | run `git init` in the new brain |
-| `--force` | no | allow writing into a non-empty directory |
+| `--type <personal\|company>` | `personal` | which brain to scaffold |
+| `--target <path>` | `~/second-brain` | output directory to create the brain in |
+| `--name <name>` | target folder name | display name |
+| `--git-init` | _(off)_ | run `git init` in the new brain |
+| `--force` | _(off)_ | overwrite existing files from templates (prompts for confirmation first) |
 
 ---
 

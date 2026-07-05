@@ -1,8 +1,8 @@
 # Brain CI — the no-AI automation layer.
 #
-# * lint on every push — BLOCKING, mirroring the local pre-commit hook
-#   (.githooks/pre-commit, installed via scripts/install-hooks); CI is the
-#   backstop for commits made without the hook (web editor, --no-verify).
+# * lint on every push — BLOCKING; the agent runs the same checks before
+#   committing, and CI is the backstop for commits made via web editor or
+#   without agent involvement.
 # * weekly digest — opens/refreshes a "Brain digest" issue every Sunday morning
 #   so recent changes, waiting inbox items, and stale projects land in front of
 #   you without being asked.

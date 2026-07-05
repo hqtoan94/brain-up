@@ -28,12 +28,6 @@ Standalone company brain repository. Keep this on the work-issued device only.
 
 Install / sync this brain on a machine with [brain-up](https://github.com/hqtoan94/brain-up).
 
-**Once per clone**, install the commit gate (regenerates indexes, blocks on lint errors):
-
-```bash
-scripts/install-hooks
-```
-
 ## Conventions
 
 - Every note has YAML frontmatter with `type`, `title`, `created`, `updated`, `tags`.

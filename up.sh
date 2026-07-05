@@ -399,12 +399,12 @@ run_init_mode() {
     substitute_placeholders "$name" "$today" "${COPIED_FILES[@]}"
   fi
 
-  # Restore executable permissions on scripts and hooks (sed redirect loses +x).
+  # Restore executable permissions on scripts (sed redirect loses +x).
   # Guard the expansion: an empty array under `set -u` is an error on bash 3.2.
   if [[ ${#COPIED_FILES[@]} -gt 0 ]]; then
     for f in "${COPIED_FILES[@]}"; do
       case "$f" in
-        */scripts/*|*/.githooks/*) [[ -f "$f" ]] && chmod +x "$f" ;;
+        */scripts/*) [[ -f "$f" ]] && chmod +x "$f" ;;
       esac
     done
   fi
@@ -418,11 +418,6 @@ run_init_mode() {
       [[ -d ".git" ]] || git init >/dev/null
     )
     echo "  git:      initialized"
-  fi
-
-  # Install pre-commit hooks if the brain has a git repo and the script exists
-  if [[ -d "$target/.git" && -f "$target/scripts/install-hooks" ]]; then
-    ( cd "$target" && sh scripts/install-hooks )
   fi
 
   echo
@@ -499,14 +494,7 @@ EOF
     fi
   fi
 
-  # 3) Install pre-commit hooks if the script exists
-  if [[ -d "$BRAIN/.git" && -f "$BRAIN/scripts/install-hooks" ]]; then
-    echo
-    echo "Hooks"
-    ( cd "$BRAIN" && sh scripts/install-hooks )
-  fi
-
-  # 4) Link rules
+  # 3) Link rules
   link_rules "$RULES_DIR"
 }
 

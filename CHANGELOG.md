@@ -63,11 +63,10 @@ inherits, plus the versioning mechanism itself.
 - **No-AI automation layer (`scripts/`):** `lint` (frontmatter, maturity,
   project→goal/area linkage, link resolution), `regen-indexes` (generated
   `index.md` maps), `freshness` (staleness report), `digest` (rollup),
-  `add-types` (backfill `type:` frontmatter), `install-hooks`, and the shared
-  `brainlib.py`.
-- **Commit gating.** A tracked `.githooks/pre-commit` hook (regen + stage indexes,
-  block on lint errors) and a `.github/workflows/brain-ci.yml` backstop that runs
-  the same checks in CI.
+  `add-types` (backfill `type:` frontmatter), and the shared `brainlib.py`.
+- **CI backstop.** A `.github/workflows/brain-ci.yml` that runs lint and
+  stale-index checks on every push. The agent runs the same checks before
+  committing; CI catches anything that slips through.
 - **Frontmatter convention.** OKF-style `type:` per folder; `lint` enforces
   `type`, `title`, `created`, `updated` on every content note; resources declare
   `maturity: atomic | distilled | stub`.

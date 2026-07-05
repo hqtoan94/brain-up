@@ -90,7 +90,7 @@ Defaults: `--type personal`, `--target ~/second-brain`, `--name` = the target fo
 
 Re-running `--init` is non-destructive: it only adds missing files and never touches your existing ones.
 
-Every generated brain ships with a `scripts/` directory (lint, index generation, freshness reports, digest, `brain-upgrade`) and a `.githooks/pre-commit` hook that gates commits on lint. If you use `--git-init`, the hooks are installed automatically; otherwise run `scripts/install-hooks` once after your first `git init`.
+Every generated brain ships with a `scripts/` directory (lint, index generation, freshness reports, digest, `brain-upgrade`). The agent runs `scripts/regen-indexes` and `scripts/lint` before committing; CI runs the same checks on push as a backstop.
 
 ### Version control is optional (do it later)
 
@@ -183,8 +183,8 @@ All boilerplate lives as real files under [`templates/`](templates/), so nobody 
 templates/
 ├── common/      shared layout: raw/, brain/* folders, note templates, .gitignore,
 │                scripts/ (lint, regen-indexes, freshness, digest, add-types,
-│                install-hooks, brain-upgrade),
-│                .githooks/pre-commit, .github/workflows/brain-ci.yml
+│                brain-upgrade),
+│                .github/workflows/brain-ci.yml
 ├── personal/    AGENTS.md + CHEATSHEET.md
 │                .claude/agents/second-brain.md   (full operating contract)
 │                .claude/rules/second-brain.mdc   (user-level trigger router)

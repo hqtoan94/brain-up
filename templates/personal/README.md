@@ -26,12 +26,6 @@ Standalone personal brain repository (plain Markdown, portable, greppable).
 
 Install / sync this brain on a machine with [brain-up](https://github.com/hqtoan94/brain-up).
 
-**Once per clone**, install the commit gate (regenerates indexes, blocks on lint errors):
-
-```bash
-scripts/install-hooks
-```
-
 ## Conventions
 
 - Every note has YAML frontmatter with `type`, `title`, `created`, `updated`, `tags`.

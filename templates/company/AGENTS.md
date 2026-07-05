@@ -15,6 +15,19 @@ This repo is the **brain**: plain markdown + git, fully operable with no AI prov
 - **`scripts/` is the no-AI automation layer** (plain python, no network): `lint`, `regen-indexes`, `freshness`, `digest`. Runnable by hand, by CI (`.github/workflows/brain-ci.yml`), or by any agent. After adding, renaming, moving, or archiving notes, run `scripts/regen-indexes`; run `scripts/lint` before committing bulk changes.
 - **Commits are gated locally.** Run `scripts/install-hooks` once per clone: the tracked `.githooks/pre-commit` hook regenerates + stages the index maps and blocks the commit on lint errors (warnings pass). CI runs the same checks as the backstop for hook-less commits (web editor, `--no-verify`). If a commit is rejected, fix the reported errors — don't reach for `--no-verify` unless it's a genuine emergency.
 
+## Staying current with brain-up
+
+This brain was scaffolded by [`brain-up`](https://github.com/hqtoan94/brain-up) and carries a `.brain-version` pin at its root — the scaffold version it was generated/last-upgraded from. When the user asks to update the brain or pick up new features, run the shipped helper:
+
+```bash
+scripts/brain-upgrade            # dry-run: current pin vs latest + changelog delta
+scripts/brain-upgrade --apply    # add missing files & re-stamp (non-destructive)
+```
+
+The pin records `type: company`, so `brain-upgrade` applies the correct overlay automatically. Read the changelog entries newer than the pinned `version:` — each lists the skills, scripts, and templates that arrived — and wire the relevant ones in. Use `--apply --force` only to also overwrite changed scaffold files (prompts first). `brain-upgrade` delegates to `up.sh` and never touches the user's notes.
+
+Never hand-edit `.brain-version` — `up.sh`/`brain-upgrade` manage it.
+
 ## Quick orientation (for humans)
 
 - **`brain/`** — synthesized work notes (what you wrote). Read and write freely.

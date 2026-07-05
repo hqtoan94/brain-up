@@ -90,7 +90,7 @@ Defaults: `--type personal`, `--target ~/second-brain`, `--name` = the target fo
 
 Re-running `--init` is non-destructive: it only adds missing files and never touches your existing ones.
 
-Every generated brain ships with a `scripts/` directory (lint, index generation, freshness reports, digest) and a `.githooks/pre-commit` hook that gates commits on lint. If you use `--git-init`, the hooks are installed automatically; otherwise run `scripts/install-hooks` once after your first `git init`.
+Every generated brain ships with a `scripts/` directory (lint, index generation, freshness reports, digest, `brain-upgrade`) and a `.githooks/pre-commit` hook that gates commits on lint. If you use `--git-init`, the hooks are installed automatically; otherwise run `scripts/install-hooks` once after your first `git init`.
 
 ### Version control is optional (do it later)
 
@@ -182,7 +182,8 @@ All boilerplate lives as real files under [`templates/`](templates/), so nobody 
 ```
 templates/
 ├── common/      shared layout: raw/, brain/* folders, note templates, .gitignore,
-│                scripts/ (lint, regen-indexes, freshness, digest, add-types, install-hooks),
+│                scripts/ (lint, regen-indexes, freshness, digest, add-types,
+│                install-hooks, brain-upgrade),
 │                .githooks/pre-commit, .github/workflows/brain-ci.yml
 ├── personal/    AGENTS.md + CHEATSHEET.md
 │                .claude/agents/second-brain.md   (full operating contract)
@@ -206,11 +207,57 @@ templates/
 - `{{NAME}}` — replaced with `--name`
 - `{{DATE}}` — replaced with today's date (`YYYY-MM-DD`)
 
+Every generated brain also gets a `.brain-version` pin at its root recording the
+scaffold version it was minted from — see [Versioning & upgrades](#versioning--upgrades).
+
 ### Frontmatter convention
 
 Every note template includes a `type:` field (OKF-style convention) mapping folder to note kind — e.g. `type: project`, `type: area`, `type: resource`. The `scripts/lint` checker enforces `type`, `title`, `created`, and `updated` on every content note. Run `scripts/add-types` to backfill `type:` on existing notes that lack it.
 
 ---
+
+## Versioning & upgrades
+
+`brain-up` is a living scaffold: new skills, scripts, and templates land over
+time. Versioning is how an already-generated brain finds out what's new and
+pulls it in on its own terms.
+
+Three pieces make this work:
+
+- **[`VERSION`](VERSION)** — the scaffold's current [SemVer](https://semver.org/)
+  version, the single source of truth.
+- **[`CHANGELOG.md`](CHANGELOG.md)** — the feature ledger. Every entry lists the
+  concrete files/skills/scripts a version introduced. MINOR = new backward-compatible
+  feature (safe to adopt), MAJOR = manual migration required, PATCH = fixes.
+- **`.brain-version`** — a pin written into *every generated brain* at its root by
+  `up.sh --init`, recording the scaffold version it was minted/last-upgraded from,
+  plus the source repo, ref, and generated/stamped dates. It's a plain committed
+  file, so `git log` shows a brain's upgrade history.
+
+### Adopting new features in an existing brain
+
+Every generated brain ships a **`scripts/brain-upgrade`** helper that runs the
+whole loop — check the pin, show the changelog delta, and pull in what's missing:
+
+```bash
+cd ~/second-brain
+
+scripts/brain-upgrade                  # dry-run: your pin vs latest + changelog
+scripts/brain-upgrade --apply          # ADD files you're missing, re-stamp the pin
+scripts/brain-upgrade --apply --force  # also OVERWRITE changed scaffold files
+```
+
+`--apply` is **non-destructive** (only adds missing files; your notes are never
+touched) and re-stamps `.brain-version`. It fetches from the `source`/`ref`
+recorded in the pin (GitHub by default), downloads `up.sh`, and delegates to
+`up.sh --init` — so no local `brain-up` clone is needed.
+
+In **sync mode**, `up.sh` also prints the brain's current pin so you know when
+it's time to run `brain-upgrade`.
+
+Because `.brain-version` and the changelog are both plain text, the brain's own
+agent can do all of this for you: read the pin, diff it against the changelog,
+and offer to wire in the new features.
 
 ## Daily moves (once a brain is up)
 

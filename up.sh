@@ -162,6 +162,51 @@ list_overwrites() {
   done < <(find "$src" -type f -print0)
 }
 
+# Resolve the scaffold version from the VERSION file that sits at the brain-up
+# repo root (sibling of templates/). Works for both the bundled checkout next to
+# this script and the tarball fetched by ensure_templates. Falls back to
+# "unknown" so a missing file never aborts a scaffold.
+scaffold_version() {
+  local vf="$(dirname "$TEMPLATES_DIR")/VERSION"
+  if [[ -f "$vf" ]]; then
+    head -n1 "$vf" | tr -d '[:space:]'
+  else
+    echo "unknown"
+  fi
+}
+
+# Write the .brain-version pin into a generated brain. Records which scaffold
+# version this brain was generated/upgraded from so it can later diff against the
+# brain-up CHANGELOG and adopt new features. Preserves the original `generated:`
+# date on re-runs and refreshes `stamped:` to today.
+write_version_stamp() {
+  local target="$1"
+  local version="$2"
+  local type="$3"
+  local stamp="$target/.brain-version"
+  local today generated
+  today="$(date +%F)"
+  generated="$today"
+  if [[ -f "$stamp" ]]; then
+    local prev
+    prev="$(sed -n 's/^generated:[[:space:]]*//p' "$stamp" | head -n1)"
+    [[ -n "$prev" ]] && generated="$prev"
+  fi
+  cat > "$stamp" <<EOF
+# brain-up scaffold version pin (managed by up.sh — safe to commit).
+# Check for and adopt new features with:  scripts/brain-upgrade
+# Changelog:
+#   https://github.com/${TEMPLATES_REPO}/blob/${TEMPLATES_REF}/CHANGELOG.md
+version: ${version}
+type: ${type}
+source: ${TEMPLATES_REPO}
+ref: ${TEMPLATES_REF}
+generated: ${generated}
+stamped: ${today}
+EOF
+  echo "  stamp    .brain-version (version: ${version})"
+}
+
 # Replace {{NAME}} and {{DATE}} placeholders in the given files.
 substitute_placeholders() {
   local name="$1"
@@ -321,6 +366,7 @@ run_init_mode() {
   echo "  target:   $target"
   echo "  name:     $name"
   echo "  mode:     $copy_mode"
+  echo "  version:  $(scaffold_version)"
 
   # --force is destructive: warn about every existing file it would overwrite
   # and always require explicit confirmation before touching anything.
@@ -353,12 +399,18 @@ run_init_mode() {
     substitute_placeholders "$name" "$today" "${COPIED_FILES[@]}"
   fi
 
-  # Restore executable permissions on scripts and hooks (sed redirect loses +x)
-  for f in "${COPIED_FILES[@]}"; do
-    case "$f" in
-      */scripts/*|*/.githooks/*) [[ -f "$f" ]] && chmod +x "$f" ;;
-    esac
-  done
+  # Restore executable permissions on scripts and hooks (sed redirect loses +x).
+  # Guard the expansion: an empty array under `set -u` is an error on bash 3.2.
+  if [[ ${#COPIED_FILES[@]} -gt 0 ]]; then
+    for f in "${COPIED_FILES[@]}"; do
+      case "$f" in
+        */scripts/*|*/.githooks/*) [[ -f "$f" ]] && chmod +x "$f" ;;
+      esac
+    done
+  fi
+
+  # Stamp the scaffold version so this brain can diff against future releases.
+  write_version_stamp "$target" "$(scaffold_version)" "$INIT_TYPE"
 
   if [[ "$INIT_GIT" == "true" ]]; then
     (
@@ -414,6 +466,10 @@ EOF
   fi
 
   echo "Brain:   $BRAIN"
+  if [[ -f "$BRAIN/.brain-version" ]]; then
+    pin="$(sed -n 's/^version:[[:space:]]*//p' "$BRAIN/.brain-version" | head -n1)"
+    [[ -n "$pin" ]] && echo "  scaffold pin: $pin (compare with brain-up CHANGELOG for newer features)"
+  fi
 
   # 2) Pull
   echo

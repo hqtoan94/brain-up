@@ -1,0 +1,120 @@
+#!/usr/bin/env bash
+# brain-upgrade — check this brain against its brain-up scaffold and adopt new features.
+#
+# Reads the .brain-version pin at the brain root, compares it against the latest
+# scaffold VERSION on GitHub, prints the CHANGELOG delta, and (with --apply)
+# fetches and runs brain-up's up.sh --init against this brain to pull in files
+# it's missing.
+#
+# This script does no copying itself — it delegates to up.sh (the single source
+# of truth for the scaffold layout), so it never drifts from how brains are made.
+#
+# Requires: curl (for fetching from GitHub).
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
+BRAIN="$(cd "$SCRIPT_DIR/.." && pwd)"
+PIN="$BRAIN/.brain-version"
+
+APPLY=false
+FORCE=false
+REF_OVERRIDE=""
+
+usage() {
+  cat <<'EOF'
+Usage: scripts/brain-upgrade [--apply] [--force] [--ref <ref>]
+
+  (default)   dry-run: show current pin, latest scaffold version, and changelog
+  --apply     fetch the scaffold and run up.sh --init against this brain
+              (non-destructive: only ADDS files this brain is missing)
+  --force     with --apply, also OVERWRITE changed scaffold files (prompts first)
+  --ref <ref> pull from a specific brain-up branch/tag (default: from .brain-version)
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --apply) APPLY=true; shift ;;
+    --force) FORCE=true; shift ;;
+    --ref)   REF_OVERRIDE="${2:-}"; shift 2 ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "error: unknown argument: $1" >&2; usage; exit 1 ;;
+  esac
+done
+
+command -v curl >/dev/null 2>&1 || { echo "error: 'curl' is required." >&2; exit 1; }
+
+pin_get() { # key -> value (empty if pin/key absent)
+  [[ -f "$PIN" ]] || return 0
+  sed -n "s/^$1:[[:space:]]*//p" "$PIN" | head -n1
+}
+
+CUR_VERSION="$(pin_get version)"; CUR_VERSION="${CUR_VERSION:-unknown}"
+SOURCE="$(pin_get source)";       SOURCE="${SOURCE:-hqtoan94/brain-up}"
+REF="$(pin_get ref)";             REF="${REF:-main}"
+TYPE="$(pin_get type)";           TYPE="${TYPE:-personal}"
+[[ -n "$REF_OVERRIDE" ]] && REF="$REF_OVERRIDE"
+
+RAW_BASE="https://raw.githubusercontent.com/$SOURCE/$REF"
+
+fetch() { # relpath -> stdout
+  curl -fsSL "$RAW_BASE/$1"
+}
+
+LATEST="$(fetch VERSION 2>/dev/null | head -n1 | tr -d '[:space:]' || true)"
+if [[ -z "$LATEST" ]]; then
+  echo "error: could not read latest scaffold VERSION from $RAW_BASE/VERSION" >&2
+  exit 1
+fi
+
+# Compare current vs latest with version sort.
+state="unknown"
+if [[ "$CUR_VERSION" == "unknown" ]]; then
+  state="unpinned"
+elif [[ "$CUR_VERSION" == "$LATEST" ]]; then
+  state="current"
+else
+  newest="$(printf '%s\n%s\n' "$CUR_VERSION" "$LATEST" | sort -V | tail -n1)"
+  [[ "$newest" == "$LATEST" ]] && state="behind" || state="ahead"
+fi
+
+echo "brain-upgrade"
+echo "  brain:    $BRAIN"
+echo "  type:     $TYPE"
+echo "  current:  $CUR_VERSION"
+echo "  latest:   $LATEST   (github.com/$SOURCE@$REF)"
+case "$state" in
+  current)  echo "  status:   up to date" ;;
+  behind)   echo "  status:   UPGRADE AVAILABLE ($CUR_VERSION -> $LATEST)" ;;
+  ahead)    echo "  status:   local is newer than source (nothing to pull)" ;;
+  unpinned) echo "  status:   no .brain-version pin — will stamp on --apply" ;;
+esac
+
+echo
+echo "Changelog ($SOURCE@$REF):"
+echo "----------------------------------------------------------------------"
+fetch CHANGELOG.md 2>/dev/null || echo "(no CHANGELOG.md found at $RAW_BASE/CHANGELOG.md)"
+echo "----------------------------------------------------------------------"
+
+if [[ "$APPLY" != "true" ]]; then
+  echo
+  if [[ "$state" == "behind" || "$state" == "unpinned" ]]; then
+    echo "Review the changelog above, then apply with:"
+    echo "  scripts/brain-upgrade --apply          # add missing files"
+    echo "  scripts/brain-upgrade --apply --force  # also overwrite changed scaffold files"
+  else
+    echo "Nothing to apply. Re-run with --apply to force a re-sync anyway."
+  fi
+  exit 0
+fi
+
+echo
+echo "Applying (type: $TYPE) ..."
+args=(--init --type "$TYPE" --target "$BRAIN")
+[[ "$FORCE" == "true" ]] && args+=(--force)
+
+curl -fsSL "$RAW_BASE/up.sh" \
+  | TEMPLATES_REPO="$SOURCE" TEMPLATES_REF="$REF" bash -s -- "${args[@]}"
+
+echo
+echo "Done. .brain-version is re-stamped; review changes with: git -C \"$BRAIN\" status"

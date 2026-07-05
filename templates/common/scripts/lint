@@ -1,0 +1,75 @@
+#!/usr/bin/env python3
+"""Vault lint — mechanical health checks, no AI, no network.
+
+Checks:
+  1. every content note has frontmatter with title, created, updated, type
+  2. resources declare maturity: atomic | distilled | stub
+  3. active projects link up to a goal or an area (the linkage rule)
+  4. relative markdown links to .md files resolve
+  5. wiki-style [[links]] inside brain/resources/ resolve to a resource note
+
+Exit code 1 if any error-level finding exists.
+
+Usage: scripts/lint
+"""
+
+import re
+import sys
+
+from brainlib import BRAIN, content_notes, read_note
+
+REQUIRED_KEYS = ("title", "created", "updated", "type")
+MATURITIES = {"atomic", "distilled", "stub"}
+
+MD_LINK = re.compile(r"\]\(([^)#\s]+\.md)(#[^)]*)?\)")
+WIKI_LINK = re.compile(r"\[\[([^\]|#]+)")
+
+
+def main():
+    errors, warnings = [], []
+    resource_stems = {p.stem for p in (BRAIN / "resources").glob("*.md")} if (BRAIN / "resources").is_dir() else set()
+
+    for path, folder in content_notes():
+        rel = path.relative_to(BRAIN.parent)
+        text, meta, _ = read_note(path)
+
+        if meta is None:
+            errors.append(f"{rel}: no frontmatter block")
+            continue
+        for key in REQUIRED_KEYS:
+            if key not in meta:
+                if key == "updated" and meta.get("type") == "vocab-entry":
+                    continue
+                errors.append(f"{rel}: missing frontmatter key `{key}`")
+
+        if folder == "resources" and meta.get("type", "resource") == "resource" and meta.get("maturity") not in MATURITIES:
+            errors.append(f"{rel}: maturity must be one of {sorted(MATURITIES)}")
+
+        if folder == "projects" and meta.get("status") == "active":
+            linked = [meta.get(k) for k in ("linked_area", "linked_goal")]
+            if not any(v and v not in ("none", "") and not v.startswith("<") for v in linked):
+                errors.append(f"{rel}: active project with neither linked_area nor linked_goal")
+
+        for m in MD_LINK.finditer(text):
+            target = m.group(1)
+            if target.startswith(("http://", "https://")):
+                continue
+            if not (path.parent / target).resolve().exists():
+                warnings.append(f"{rel}: broken link -> {target}")
+
+        if folder == "resources":
+            for m in WIKI_LINK.finditer(text):
+                stem = m.group(1).strip()
+                if stem and stem not in resource_stems:
+                    warnings.append(f"{rel}: unresolved [[{stem}]]")
+
+    for line in errors:
+        print(f"ERROR   {line}")
+    for line in warnings:
+        print(f"warning {line}")
+    print(f"\nlint: {len(errors)} errors, {len(warnings)} warnings")
+    sys.exit(1 if errors else 0)
+
+
+if __name__ == "__main__":
+    main()

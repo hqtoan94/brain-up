@@ -81,6 +81,10 @@ Resources here are **internal-only** — they often contain the most identifying
 - Consumed by the personal brain's `receive-handoff` skill, which reads the file and writes anonymized entries into `~/second-brain/brain/career/`, `~/second-brain/brain/resources/` (as atomic notes), and project/area logs.
 - After successful ingestion the handoff file stays in `handoff/` as a record. Don't auto-delete.
 
+### Generated files & scripts
+
+Root `index.md` and every `brain/<folder>/index.md` are **generated** by `scripts/regen-indexes` — never edit them by hand; rerun the script after adding, renaming, moving, or archiving notes. `scripts/` also provides `lint` (health checks — run before committing bulk changes), `freshness` (stale active projects/areas), and `digest` (weekly push summary; CI posts it as an issue). All plain python, no AI, no network.
+
 ## Filename Conventions
 
 | Folder              | Convention                                      | Example                        |
@@ -103,6 +107,7 @@ Every note (outside `brain/inbox/` quick captures) has YAML frontmatter. Minimum
 
 ```yaml
 ---
+type: project             # note kind by folder: project | area | resource | meeting | decision | 1on1 | journal | person
 title: …
 created: YYYY-MM-DD
 updated: YYYY-MM-DD
@@ -110,7 +115,7 @@ tags: […]
 ---
 ```
 
-Type-specific fields are defined in `brain/templates/`. Notably:
+`type` follows the OKF-style convention (folder → type; see `scripts/brainlib.py`). `scripts/lint` enforces the minimum. Type-specific fields are defined in `brain/templates/`. Notably:
 
 - **Projects** (`brain/projects/<slug>.md`): `status`, `deadline`, `linked_area:` (an area in this repo or `none`).
 - **Meetings** (`brain/meetings/...`): `attendees: [name, name]`, `type: standup | 1on1 | planning | retro | review | other`.

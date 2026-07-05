@@ -30,6 +30,9 @@ secrets.yaml
 scratch/
 *.draft.md
 
+# Python bytecode
+__pycache__/
+
 # Bulk raw artifacts — uncomment if you want transcripts, exports, recordings
 # kept on disk but out of git history (storage / exfil considerations).
 # raw/large/

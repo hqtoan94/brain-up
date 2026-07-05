@@ -1,0 +1,109 @@
+#!/usr/bin/env python3
+"""Regenerate the root index.md and per-folder brain/<folder>/index.md files.
+
+Index files are GENERATED artifacts (progressive-disclosure maps for humans
+and agents). They are never edited by hand — rerun this script instead.
+Run after adding, renaming, or moving notes; CI may also run it.
+
+Usage: scripts/regen-indexes
+"""
+
+from brainlib import BRAIN, GENERATED_MARKER, INDEXED_FOLDERS, VAULT_ROOT, read_note
+
+
+def note_entries(folder):
+    """[(sort_key, line)] for every content note in brain/<folder>."""
+    entries = []
+    root = BRAIN / folder
+    for path in sorted(root.rglob("*.md")):
+        if path.name in {"README.md", "index.md"} or "templates" in path.parts:
+            continue
+        _, meta, _ = read_note(path)
+        meta = meta or {}
+        title = meta.get("title") or path.stem
+        rel = path.relative_to(root).as_posix()
+        detail = []
+        if meta.get("maturity"):
+            detail.append(meta["maturity"])
+        if meta.get("status"):
+            detail.append(meta["status"])
+        suffix = f" — {', '.join(detail)}" if detail else ""
+        entries.append((str(title).lower(), f"* [{title}]({rel}){suffix}"))
+    return entries
+
+
+BLURBS = {
+    "projects": "active, goal-bound efforts (PARA)",
+    "areas": "ongoing responsibilities (PARA)",
+    "resources": "atomic + distilled knowledge notes",
+    "goals": "vision and yearly outcomes",
+    "journal": "one note per day",
+    "people": "contacts and relationships",
+    "career": "portable, anonymized career record",
+    "archive": "done / inactive items",
+    "meetings": "meeting notes",
+    "decisions": "decision records (ADR-style)",
+    "1on1s": "one-on-one meeting notes",
+}
+
+
+def write_folder_index(folder):
+    root = BRAIN / folder
+    if not root.is_dir():
+        return 0
+    entries = note_entries(folder)
+    if folder == "journal":
+        entries.sort(key=lambda e: e[0], reverse=True)
+    else:
+        entries.sort(key=lambda e: e[0])
+    lines = [
+        f"# {folder} — index",
+        "",
+        GENERATED_MARKER,
+        "",
+        f"{len(entries)} notes. See [README.md](README.md) for what belongs here.",
+        "",
+        *[line for _, line in entries],
+        "",
+    ]
+    (root / "index.md").write_text("\n".join(lines), encoding="utf-8")
+    return len(entries)
+
+
+def write_root_index(counts):
+    lines = [
+        "# {{NAME}} — map",
+        "",
+        GENERATED_MARKER,
+        "",
+        "Start here. The operating contract is [AGENTS.md](AGENTS.md); the quick",
+        "reference is [CHEATSHEET.md](CHEATSHEET.md). Sources to ingest live in",
+        "[raw/](raw/); everything synthesized lives in [brain/](brain/).",
+        "",
+        "| Folder | Notes | What it holds |",
+        "|---|---|---|",
+    ]
+    for folder in INDEXED_FOLDERS:
+        if folder not in counts or counts[folder] == 0:
+            if not (BRAIN / folder).is_dir():
+                continue
+        blurb = BLURBS.get(folder, folder)
+        lines.append(
+            f"| [{folder}](brain/{folder}/index.md) | {counts.get(folder, 0)} | {blurb} |"
+        )
+    lines += [""]
+    (VAULT_ROOT / "index.md").write_text("\n".join(lines), encoding="utf-8")
+
+
+def main():
+    counts = {}
+    for folder in INDEXED_FOLDERS:
+        if (BRAIN / folder).is_dir():
+            counts[folder] = write_folder_index(folder)
+            print(f"brain/{folder}/index.md — {counts[folder]} entries")
+    write_root_index(counts)
+    print("index.md — root map")
+
+
+if __name__ == "__main__":
+    main()

@@ -128,6 +128,7 @@ Every note (outside `brain/inbox/` quick captures) should have YAML frontmatter.
 
 ```yaml
 ---
+type: resource            # note kind by folder: project | area | resource | goal | journal | person | career-role
 title: Human-readable title
 created: 2026-04-26
 updated: 2026-04-26
@@ -135,7 +136,11 @@ tags: [tag1, tag2]
 ---
 ```
 
-Additional fields per note type are defined in `brain/templates/`.
+`type` follows the OKF-style convention (folder → type; see `scripts/brainlib.py`); special-purpose notes may declare their own (e.g. `vocab-entry`). Additional fields per note type are defined in `brain/templates/`. `scripts/lint` enforces the minimum.
+
+### Generated files & scripts
+
+Root `index.md` and every `brain/<folder>/index.md` are **generated** by `scripts/regen-indexes` — never edit them by hand; rerun the script after adding, renaming, moving, or archiving notes. `scripts/` also provides `lint` (health checks — run before committing bulk changes), `freshness` (stale active projects/areas), and `digest` (weekly push summary; CI posts it as an issue). All plain python, no AI, no network.
 
 ### Links
 

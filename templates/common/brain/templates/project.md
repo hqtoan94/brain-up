@@ -1,4 +1,5 @@
 ---
+type: project
 title: Project Title
 created: {{DATE}}
 updated: {{DATE}}

@@ -1,4 +1,5 @@
 ---
+type: resource
 title: Resource Title
 created: {{DATE}}
 updated: {{DATE}}

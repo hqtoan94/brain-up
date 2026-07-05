@@ -90,6 +90,8 @@ Defaults: `--type personal`, `--target ~/second-brain`, `--name` = the target fo
 
 Re-running `--init` is non-destructive: it only adds missing files and never touches your existing ones.
 
+Every generated brain ships with a `scripts/` directory (lint, index generation, freshness reports, digest) and a `.githooks/pre-commit` hook that gates commits on lint. If you use `--git-init`, the hooks are installed automatically; otherwise run `scripts/install-hooks` once after your first `git init`.
+
 ### Version control is optional (do it later)
 
 You don't need a git repo to use a brain. When you want history and backups, turn the folder into one — either pass `--git-init` when creating it, or set it up yourself afterwards:
@@ -179,7 +181,9 @@ All boilerplate lives as real files under [`templates/`](templates/), so nobody 
 
 ```
 templates/
-├── common/      shared layout: raw/, brain/* folders, note templates, .gitignore
+├── common/      shared layout: raw/, brain/* folders, note templates, .gitignore,
+│                scripts/ (lint, regen-indexes, freshness, digest, add-types, install-hooks),
+│                .githooks/pre-commit, .github/workflows/brain-ci.yml
 ├── personal/    AGENTS.md + CHEATSHEET.md
 │                .claude/agents/second-brain.md   (full operating contract)
 │                .claude/rules/second-brain.mdc   (user-level trigger router)
@@ -201,6 +205,10 @@ templates/
 
 - `{{NAME}}` — replaced with `--name`
 - `{{DATE}}` — replaced with today's date (`YYYY-MM-DD`)
+
+### Frontmatter convention
+
+Every note template includes a `type:` field (OKF-style convention) mapping folder to note kind — e.g. `type: project`, `type: area`, `type: resource`. The `scripts/lint` checker enforces `type`, `title`, `created`, and `updated` on every content note. Run `scripts/add-types` to backfill `type:` on existing notes that lack it.
 
 ---
 

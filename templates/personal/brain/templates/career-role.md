@@ -1,4 +1,5 @@
 ---
+type: career-role
 title: <role title, generic — e.g. "Senior Software Engineer">
 created: YYYY-MM-DD
 updated: YYYY-MM-DD

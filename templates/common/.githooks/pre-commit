@@ -1,0 +1,17 @@
+#!/bin/sh
+# Pre-commit gate — the local half of brain-ci (install: scripts/install-hooks).
+#
+# 1. Regenerate the index maps and stage them, so committed indexes are never
+#    stale (they are generated artifacts; regeneration is deterministic).
+# 2. Run the vault lint. Errors block the commit; warnings pass.
+#
+# Bypass in an emergency with: git commit --no-verify
+
+set -e
+cd "$(git rev-parse --show-toplevel)"
+
+scripts/regen-indexes > /dev/null
+git add index.md brain/*/index.md 2> /dev/null || true
+
+echo "pre-commit: vault lint"
+scripts/lint

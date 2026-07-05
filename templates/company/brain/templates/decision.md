@@ -1,4 +1,5 @@
 ---
+type: decision
 title: <decision slug>
 created: YYYY-MM-DD
 updated: YYYY-MM-DD

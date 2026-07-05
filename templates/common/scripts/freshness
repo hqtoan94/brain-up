@@ -1,0 +1,57 @@
+#!/usr/bin/env python3
+"""Freshness report — which living notes are going stale.
+
+Flags, based on the `updated:` frontmatter date:
+  * active projects untouched for > 30 days
+  * areas untouched for > 90 days
+  * goal files untouched for > 90 days
+
+Journal, archive, resources, people, and career notes are exempt: they are
+records, not commitments — staleness there is normal, not a defect.
+
+Usage: scripts/freshness [--days-project N] [--days-area N]
+"""
+
+import argparse
+from datetime import date
+
+from brainlib import content_notes, parse_iso, read_note
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--days-project", type=int, default=30)
+    ap.add_argument("--days-area", type=int, default=90)
+    args = ap.parse_args()
+
+    today = date.today()
+    thresholds = {
+        "projects": args.days_project,
+        "areas": args.days_area,
+        "goals": args.days_area,
+    }
+    stale = []
+
+    for path, folder in content_notes():
+        if folder not in thresholds:
+            continue
+        _, meta, _ = read_note(path)
+        meta = meta or {}
+        if folder == "projects" and meta.get("status") != "active":
+            continue
+        updated = parse_iso(meta.get("updated"))
+        if updated is None:
+            stale.append((9999, folder, path, "no parseable `updated:` date"))
+            continue
+        age = (today - updated).days
+        if age > thresholds[folder]:
+            stale.append((age, folder, path, f"untouched {age} days"))
+
+    stale.sort(reverse=True)
+    for _, folder, path, why in stale:
+        print(f"{folder:9} {path.name:60} {why}")
+    print(f"\nfreshness: {len(stale)} stale notes (projects >{args.days_project}d, areas/goals >{args.days_area}d)")
+
+
+if __name__ == "__main__":
+    main()

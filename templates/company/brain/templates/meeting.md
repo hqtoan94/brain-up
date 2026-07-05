@@ -1,4 +1,5 @@
 ---
+type: meeting
 title: YYYY-MM-DD — <meeting title>
 created: YYYY-MM-DD
 updated: YYYY-MM-DD

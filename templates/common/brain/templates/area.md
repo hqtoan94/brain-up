@@ -1,4 +1,5 @@
 ---
+type: area
 title: Area Title
 created: {{DATE}}
 updated: {{DATE}}

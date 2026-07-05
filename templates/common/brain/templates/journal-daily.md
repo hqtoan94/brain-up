@@ -1,4 +1,5 @@
 ---
+type: journal
 title: Daily Journal
 created: {{DATE}}
 updated: {{DATE}}

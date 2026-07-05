@@ -1,0 +1,69 @@
+# Brain CI — the no-AI automation layer.
+#
+# * lint on every push — BLOCKING, mirroring the local pre-commit hook
+#   (.githooks/pre-commit, installed via scripts/install-hooks); CI is the
+#   backstop for commits made without the hook (web editor, --no-verify).
+# * weekly digest — opens/refreshes a "Brain digest" issue every Sunday morning
+#   so recent changes, waiting inbox items, and stale projects land in front of
+#   you without being asked.
+#
+# No AI, no external services — plain python + git + GitHub API.
+
+name: brain-ci
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 21 * * 6" # Sunday 08:00 AEST (Saturday 21:00 UTC) — adjust to your timezone
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  lint:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Vault lint
+        run: python3 scripts/lint
+      - name: Indexes are current
+        run: |
+          python3 scripts/regen-indexes > /dev/null
+          git diff --exit-code -- index.md 'brain/*/index.md' \
+            || { echo '::error::stale generated indexes — run scripts/regen-indexes and commit'; exit 1; }
+
+  digest:
+    if: github.event_name != 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Build digest
+        run: python3 scripts/digest > /tmp/digest.md
+      - name: Open or refresh the digest issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('/tmp/digest.md', 'utf8');
+            const title = 'Brain digest — week of ' + new Date().toISOString().slice(0, 10);
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: 'open', labels: 'digest',
+            });
+            if (issues.length > 0) {
+              await github.rest.issues.update({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: issues[0].number, title, body,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner, repo: context.repo.repo,
+                title, body, labels: ['digest'],
+              });
+            }

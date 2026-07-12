@@ -8,7 +8,8 @@ Checks:
   4. relative markdown links to .md files resolve
   5. wiki-style [[links]] inside brain/resources/ resolve to a resource note
 
-Exit code 1 if any error-level finding exists.
+Exit code 1 if any error-level finding exists (CI treats it as advisory for
+now — see .github/workflows/brain-ci.yml).
 
 Usage: scripts/lint
 """
@@ -16,7 +17,7 @@ Usage: scripts/lint
 import re
 import sys
 
-from brainlib import BRAIN, content_notes, read_note
+from brainlib import BRAIN, content_notes, is_knowledge_resource, read_note
 
 REQUIRED_KEYS = ("title", "created", "updated", "type")
 MATURITIES = {"atomic", "distilled", "stub"}
@@ -27,7 +28,7 @@ WIKI_LINK = re.compile(r"\[\[([^\]|#]+)")
 
 def main():
     errors, warnings = [], []
-    resource_stems = {p.stem for p in (BRAIN / "resources").glob("*.md")} if (BRAIN / "resources").is_dir() else set()
+    resource_stems = {p.stem for p in (BRAIN / "resources").glob("*.md")}
 
     for path, folder in content_notes():
         rel = path.relative_to(BRAIN.parent)
@@ -38,11 +39,12 @@ def main():
             continue
         for key in REQUIRED_KEYS:
             if key not in meta:
+                # vocab entries follow the vocab-add skill's own schema (no `updated`)
                 if key == "updated" and meta.get("type") == "vocab-entry":
                     continue
                 errors.append(f"{rel}: missing frontmatter key `{key}`")
 
-        if folder == "resources" and meta.get("type", "resource") == "resource" and meta.get("maturity") not in MATURITIES:
+        if folder == "resources" and is_knowledge_resource(path, meta) and meta.get("maturity") not in MATURITIES:
             errors.append(f"{rel}: maturity must be one of {sorted(MATURITIES)}")
 
         if folder == "projects" and meta.get("status") == "active":

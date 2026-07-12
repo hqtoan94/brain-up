@@ -15,7 +15,7 @@ Usage: scripts/freshness [--days-project N] [--days-area N]
 import argparse
 from datetime import date
 
-from brainlib import content_notes, parse_iso, read_note
+from brainlib import content_notes, parse_iso, read_note, resource_subfolder
 
 
 def main():
@@ -25,31 +25,37 @@ def main():
     args = ap.parse_args()
 
     today = date.today()
-    thresholds = {
-        "projects": args.days_project,
-        "areas": args.days_area,
-        "goals": args.days_area,
-    }
     stale = []
 
     for path, folder in content_notes():
-        if folder not in thresholds:
+        sub = resource_subfolder(path) if folder == "resources" else None
+        if folder == "projects":
+            threshold = args.days_project
+            _, meta, _ = read_note(path)
+            meta = meta or {}
+            if meta.get("status") != "active":
+                continue
+        elif folder == "areas":
+            threshold = args.days_area
+        elif (folder == "resources" and sub == "goals") or folder == "goals":
+            threshold = args.days_area
+        else:
             continue
+
         _, meta, _ = read_note(path)
         meta = meta or {}
-        if folder == "projects" and meta.get("status") != "active":
-            continue
         updated = parse_iso(meta.get("updated"))
+        label = f"resources/{sub}" if sub else folder
         if updated is None:
-            stale.append((9999, folder, path, "no parseable `updated:` date"))
+            stale.append((9999, label, path, "no parseable `updated:` date"))
             continue
         age = (today - updated).days
-        if age > thresholds[folder]:
-            stale.append((age, folder, path, f"untouched {age} days"))
+        if age > threshold:
+            stale.append((age, label, path, f"untouched {age} days"))
 
     stale.sort(reverse=True)
-    for _, folder, path, why in stale:
-        print(f"{folder:9} {path.name:60} {why}")
+    for _, label, path, why in stale:
+        print(f"{label:16} {path.name:60} {why}")
     print(f"\nfreshness: {len(stale)} stale notes (projects >{args.days_project}d, areas/goals >{args.days_area}d)")
 
 

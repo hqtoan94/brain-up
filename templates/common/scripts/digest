@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Weekly digest — the push half of resurfacing.
+"""Weekly digest — the push half of resurfacing (requirement R2).
 
 Builds a markdown digest of: notes changed in the window, inbox items waiting,
 and stale active projects/areas. No AI, no network — CI mails it or opens an
@@ -14,9 +14,9 @@ import signal
 import subprocess
 from datetime import date
 
-signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+signal.signal(signal.SIGPIPE, signal.SIG_DFL)  # exit quietly when piped to head
 
-from brainlib import BRAIN, VAULT_ROOT
+from brainlib import VAULT_ROOT, inbox_dir
 
 
 def recent_changes(days):
@@ -42,7 +42,8 @@ def main():
     args = ap.parse_args()
 
     changed = recent_changes(args.days)
-    inbox = sorted(p.name for p in (BRAIN / "inbox").glob("*.md") if p.name != "README.md") if (BRAIN / "inbox").is_dir() else []
+    inbox_root = inbox_dir()
+    inbox = sorted(p.name for p in inbox_root.glob("*.md") if p.name != "README.md") if inbox_root.is_dir() else []
     stale = freshness_lines()
 
     print(f"# Brain digest — {date.today().isoformat()}")

@@ -22,7 +22,7 @@ Answer questions using the user's own notes, not outside knowledge. The user own
 4. **Read the top hits.** Prioritize:
    - Exact-title matches
    - Files in `brain/resources/` for conceptual questions (prefer `maturity: distilled` topic pages first if present, then atomic notes)
-   - Files in `brain/projects/`, `brain/goals/`, `brain/journal/` for status/personal questions
+   - Files in `brain/projects/`, `brain/resources/goals/`, `brain/resources/journal/` for status/personal questions
    - Skip `brain/archive/` unless the user asked to include it or the query is historical
 
 5. **Synthesize the answer.**

@@ -8,16 +8,35 @@ Run after adding, renaming, or moving notes; CI may also run it.
 Usage: scripts/regen-indexes
 """
 
-from brainlib import BRAIN, GENERATED_MARKER, INDEXED_FOLDERS, VAULT_ROOT, read_note
+from brainlib import (
+    BRAIN,
+    COMPANY_INDEXED_FOLDERS,
+    GENERATED_MARKER,
+    RESOURCE_INDEXED_SUBFOLDERS,
+    RESOURCE_SUBFOLDERS,
+    VAULT_ROOT,
+    brain_type,
+    indexed_folders,
+    read_note,
+)
 
 
-def note_entries(folder):
-    """[(sort_key, line)] for every content note in brain/<folder>."""
+def note_entries(folder, subfolder=None):
+    """[(sort_key, line)] for every content note in brain/<folder>[/subfolder]."""
     entries = []
-    root = BRAIN / folder
+    if subfolder:
+        root = BRAIN / "resources" / subfolder
+    else:
+        root = BRAIN / folder
+    if not root.is_dir():
+        return entries
     for path in sorted(root.rglob("*.md")):
         if path.name in {"README.md", "index.md"} or "templates" in path.parts:
             continue
+        if folder == "resources" and not subfolder:
+            rel_to_resources = path.relative_to(root)
+            if rel_to_resources.parts and rel_to_resources.parts[0] in RESOURCE_SUBFOLDERS:
+                continue
         _, meta, _ = read_note(path)
         meta = meta or {}
         title = meta.get("title") or path.stem
@@ -32,32 +51,22 @@ def note_entries(folder):
     return entries
 
 
-BLURBS = {
-    "projects": "active, goal-bound efforts (PARA)",
-    "areas": "ongoing responsibilities (PARA)",
-    "resources": "atomic + distilled knowledge notes",
-    "goals": "vision and yearly outcomes",
-    "journal": "one note per day",
-    "people": "contacts and relationships",
-    "career": "portable, anonymized career record",
-    "archive": "done / inactive items",
-    "meetings": "meeting notes",
-    "decisions": "decision records (ADR-style)",
-    "1on1s": "one-on-one meeting notes",
-}
-
-
-def write_folder_index(folder):
-    root = BRAIN / folder
+def write_folder_index(folder, subfolder=None):
+    if subfolder:
+        root = BRAIN / "resources" / subfolder
+        label = f"resources/{subfolder}"
+    else:
+        root = BRAIN / folder
+        label = folder
     if not root.is_dir():
         return 0
-    entries = note_entries(folder)
-    if folder == "journal":
+    entries = note_entries(folder, subfolder=subfolder)
+    if folder == "journal" or subfolder == "journal":
         entries.sort(key=lambda e: e[0], reverse=True)
     else:
         entries.sort(key=lambda e: e[0])
     lines = [
-        f"# {folder} — index",
+        f"# {label} — index",
         "",
         GENERATED_MARKER,
         "",
@@ -70,38 +79,64 @@ def write_folder_index(folder):
     return len(entries)
 
 
-def write_root_index(counts):
+def write_root_index(counts, sub_counts):
     lines = [
-        "# {{NAME}} — map",
+        "# Brain — map",
         "",
         GENERATED_MARKER,
         "",
         "Start here. The operating contract is [AGENTS.md](AGENTS.md); the quick",
-        "reference is [CHEATSHEET.md](CHEATSHEET.md). Sources to ingest live in",
-        "[raw/](raw/); everything synthesized lives in [brain/](brain/).",
+        "reference is [CHEATSHEET.md](CHEATSHEET.md).",
         "",
         "| Folder | Notes | What it holds |",
         "|---|---|---|",
     ]
-    for folder in INDEXED_FOLDERS:
-        if folder not in counts or counts[folder] == 0:
-            if not (BRAIN / folder).is_dir():
-                continue
-        blurb = BLURBS.get(folder, folder)
+    blurbs = {
+        "projects": "active, goal-bound efforts (PARA)",
+        "areas": "ongoing responsibilities (PARA)",
+        "resources": "atomic + distilled knowledge notes",
+        "archive": "done / inactive items",
+        "journal": "one note per day",
+        "people": "contacts and relationships",
+        "meetings": "meeting notes",
+        "decisions": "decision records",
+        "1on1s": "1:1 notes by person",
+    }
+    sub_blurbs = {
+        "goals": "vision and yearly outcomes (reference)",
+        "journal": "one note per day (reference)",
+        "people": "contacts and relationships (reference)",
+        "career": "portable, anonymized career record (reference)",
+    }
+    for folder in indexed_folders():
         lines.append(
-            f"| [{folder}](brain/{folder}/index.md) | {counts.get(folder, 0)} | {blurb} |"
+            f"| [{folder}](brain/{folder}/index.md) | {counts.get(folder, 0)} | {blurbs[folder]} |"
         )
+    if brain_type() == "personal":
+        for sub in RESOURCE_INDEXED_SUBFOLDERS:
+            lines.append(
+                f"| [resources/{sub}](brain/resources/{sub}/index.md) | {sub_counts.get(sub, 0)} | {sub_blurbs[sub]} |"
+            )
     lines += [""]
     (VAULT_ROOT / "index.md").write_text("\n".join(lines), encoding="utf-8")
 
 
 def main():
     counts = {}
-    for folder in INDEXED_FOLDERS:
-        if (BRAIN / folder).is_dir():
-            counts[folder] = write_folder_index(folder)
-            print(f"brain/{folder}/index.md — {counts[folder]} entries")
-    write_root_index(counts)
+    for folder in indexed_folders():
+        counts[folder] = write_folder_index(folder)
+        print(f"brain/{folder}/index.md — {counts[folder]} entries")
+    sub_counts = {}
+    if brain_type() == "personal":
+        for sub in RESOURCE_INDEXED_SUBFOLDERS:
+            sub_counts[sub] = write_folder_index("resources", subfolder=sub)
+            print(f"brain/resources/{sub}/index.md — {sub_counts[sub]} entries")
+    elif brain_type() == "company":
+        for folder in COMPANY_INDEXED_FOLDERS:
+            if folder in {"journal", "people"}:
+                counts[folder] = write_folder_index(folder)
+                print(f"brain/{folder}/index.md — {counts[folder]} entries")
+    write_root_index(counts, sub_counts)
     print("index.md — root map")
 
 

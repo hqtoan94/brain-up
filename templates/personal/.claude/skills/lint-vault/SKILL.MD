@@ -20,8 +20,8 @@ Borrowed from the Obsidian PKM canon (orphan / dangling-link / frontmatter check
 Run all checks. Group findings by category. If a category is clean, omit it.
 
 ### 1. Inbox hygiene
-- Items in `brain/inbox/` whose date (filename or `created:`) is **> 14 days old** → "decision being avoided".
-- If `brain/inbox/` has **> 30 items** → suggest "inbox bankruptcy" per CHEATSHEET.
+- Items in `raw/inbox/` whose date (filename or `created:`) is **> 14 days old** → "decision being avoided".
+- If `raw/inbox/` has **> 30 items** → suggest "inbox bankruptcy" per CHEATSHEET.
 
 ### 2. Project drift
 For each `brain/projects/*.md` with `status: active`:
@@ -30,7 +30,7 @@ For each `brain/projects/*.md` with `status: active`:
 - `updated:` older than **4 weeks**.
 
 ### 3. Goal drift
-For each year-goal entry (`### G<N> …`) in `brain/goals/YYYY/year.md`:
+For each year-goal entry (`### G<N> …`) in `brain/resources/goals/YYYY/year.md`:
 - No `Linked project(s):` or empty.
 - Status hasn't changed in 30+ days (best-effort: scan recent journal/weekly-review notes).
 
@@ -52,9 +52,9 @@ For each `brain/resources/*.md` with `maturity: atomic`:
 - Frontmatter `linked_goal:` / `linked_area:` paths that don't resolve.
 
 ### 7. Frontmatter health
-For every `*.md` outside `brain/inbox/` and `brain/templates/`:
+For every `*.md` outside `raw/inbox/` and `brain/templates/`:
 - Missing any of `title:`, `created:`, `updated:`, `tags:` (per the second-brain agent's frontmatter minimum).
-- For every `brain/resources/*.md`: missing `maturity:` (must be `atomic` | `distilled` | `stub`).
+- For every top-level `brain/resources/*.md` (not subfolders): missing `maturity:` (must be `atomic` | `distilled` | `stub`).
 - `created:` or `updated:` not in `YYYY-MM-DD` form.
 
 ### 8. Misplaced or maturity-misaligned notes
@@ -92,11 +92,11 @@ Lead with the worst category. One line per finding. Cap each category at 10 find
 - Tag `learning` has 6 atomic notes but no distilled page. Promote one or write a fresh `brain/resources/learning.md`?
 
 ### Broken links (1)
-- `brain/journal/2026-04-12.md` → `[[deep-work-rules]]` — target doesn't exist.
+- `brain/resources/journal/2026-04-12.md` → `[[deep-work-rules]]` — target doesn't exist.
 
 ### Frontmatter (2)
-- `brain/people/jane-doe.md` — missing `created:`.
-- `brain/career/2024-present-staff-engineer.md` — `updated: "Apr 2026"` (not ISO).
+- `brain/resources/people/jane-doe.md` — missing `created:`.
+- `brain/resources/career/2024-present-staff-engineer.md` — `updated: "Apr 2026"` (not ISO).
 
 ### Un-ingested sources (1)
 - `raw/karpathy-llm-wiki.md` — added 12 days ago, never linked from `brain/`.

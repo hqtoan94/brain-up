@@ -1,6 +1,6 @@
 ---
 name: capture
-description: Quickly drop a thought, idea, link, or task into the brain/inbox/ folder with a timestamped filename. Use when the user says "capture", "remember this", "save to inbox", "jot this down", "add to inbox", or shares a thought with no clear instruction.
+description: Quickly drop a thought, idea, link, or task into the raw/inbox/ folder with a timestamped filename. Use when the user says "capture", "remember this", "save to inbox", "jot this down", "add to inbox", or shares a thought with no clear instruction.
 ---
 
 # Capture
@@ -12,7 +12,7 @@ Zero-friction capture. Ask as little as possible, file the thought, get out of t
 1. **Don't interrogate.** If the user's message already contains the thought, use it verbatim. Only ask if they said "capture this" with no payload.
 2. **Sensitivity check.** Before writing, scan the content for company-sensitive signals (see below). If any hit, run the **Sensitivity flow** instead of the fast path.
 3. **Derive a slug.** From the content, pick 3–6 words → kebab-case → max ~50 chars.
-4. **Create the file** at `brain/inbox/YYYY-MM-DD-<slug>.md` using today's date.
+4. **Create the file** at `raw/inbox/YYYY-MM-DD-<slug>.md` using today's date.
 5. **Minimal frontmatter:**
    ```yaml
    ---
@@ -22,7 +22,7 @@ Zero-friction capture. Ask as little as possible, file the thought, get out of t
    ---
    ```
 6. **Body = the user's words.** Lightly cleaned up (typos, basic grammar) but never summarized or editorialized. If they shared a link, keep the link.
-7. **Confirm in one line.** "Captured → `brain/inbox/2026-04-26-slug.md`." No fanfare.
+7. **Confirm in one line.** "Captured → `raw/inbox/2026-04-26-slug.md`." No fanfare.
 
 ## Sensitivity signals
 
@@ -40,7 +40,7 @@ When unsure, assume it's sensitive and run the sensitivity flow.
 
 ## Sensitivity flow
 
-Do **not** write anything to `brain/inbox/` yet. Reply with:
+Do **not** write anything to `raw/inbox/` yet. Reply with:
 
 > This looks company-specific. Three options:
 > 1. **Company repo** — I won't write it here; log it in your `~/work/<company>/` repo instead.
@@ -50,7 +50,7 @@ Do **not** write anything to `brain/inbox/` yet. Reply with:
 Honor whichever the user picks:
 
 - **(1)** — don't write. Suggest they open the company repo and optionally remind them of its path.
-- **(2)** — propose a redacted draft. Strip names, specific numbers, quotes. Keep the generalizable lesson. Show the draft, wait for approval, then write to `brain/inbox/` with `tags: [inbox, anonymized]`.
+- **(2)** — propose a redacted draft. Strip names, specific numbers, quotes. Keep the generalizable lesson. Show the draft, wait for approval, then write to `raw/inbox/` with `tags: [inbox, anonymized]`.
 - **(3)** — acknowledge and move on. Don't argue.
 
 ## Do not

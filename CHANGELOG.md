@@ -40,6 +40,47 @@ The version diff (your pin → latest) is the checklist of features to wire in.
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-07-12
+
+**Breaking migration for personal brains.** Existing personal brains must move folders
+manually (or follow the migration steps below) before adopting this release.
+
+### Changed (breaking — personal brain)
+
+- **PARA-aligned layout.** Career, goals, journal, and people move under
+  `brain/resources/` as reference subfolders (`resources/career/`, `resources/goals/`,
+  `resources/journal/`, `resources/people/`).
+- **Inbox moves to `raw/inbox/`.** Captures are unprocessed raw material; `capture`
+  writes to `raw/inbox/`, `process-inbox` reads from there.
+- **Scripts updated:** `brainlib.py`, `regen-indexes`, `digest`, `lint`, `freshness`,
+  `add-types` — resource subfolder type detection, subfolder indexes, maturity checks
+  scoped to top-level knowledge notes only.
+- **All personal skills and agent contract** updated for new paths.
+
+### Added
+
+- **`budget-planning` skill** (personal).
+- **`brain/templates/decision.md`** for personal decision records in
+  `brain/resources/decisions/`.
+- **Template stubs** for `raw/inbox/` and `brain/resources/{goals,journal,people,career}/`.
+
+### Migration (personal brain, 0.1.0 → 0.2.0)
+
+```bash
+git mv brain/career brain/resources/career
+git mv brain/goals brain/resources/goals
+git mv brain/journal brain/resources/journal
+git mv brain/people brain/resources/people
+git mv brain/inbox raw/inbox
+# Fix wiki links: ../goals/ → ../resources/goals/ from projects/areas/archive
+# Fix wiki links: ../areas/ → ../../areas/ from resources/journal/
+scripts/brain-upgrade --apply --force   # pull updated scripts & skills
+python3 scripts/regen-indexes
+python3 scripts/lint
+```
+
+Company brains are unchanged (still use `brain/inbox/`, top-level `journal/` and `people/`).
+
 ## [0.1.0] — 2026-07-05
 
 First versioned release. Establishes the baseline feature set every brain
@@ -76,5 +117,6 @@ inherits, plus the versioning mechanism itself.
 - **Company brain skills:** capture, daily-journal, process-inbox, weekly-review,
   monthly-dump — plus the work↔personal handoff boundary (`handoff/`).
 
-[Unreleased]: https://github.com/hqtoan94/brain-up/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/hqtoan94/brain-up/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/hqtoan94/brain-up/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/hqtoan94/brain-up/releases/tag/v0.1.0

@@ -9,7 +9,7 @@ One file per day. Fast, structured, optional-to-skip prompts.
 
 ## Process
 
-1. **Resolve today's file.** `brain/journal/YYYY-MM-DD.md`.
+1. **Resolve today's file.** `brain/resources/journal/YYYY-MM-DD.md`.
    - If it doesn't exist → create it from `brain/templates/journal-daily.md` with today's date filled in everywhere.
    - If it exists → open it and continue.
 
@@ -37,7 +37,7 @@ One file per day. Fast, structured, optional-to-skip prompts.
 
 7. **Lift durable insights.** If a lesson or noticing is clearly *not* date-bound (e.g. a principle they want to remember), ask: "This feels like a keeper — want me to lift it into an atomic note in `brain/resources/`?" If yes, create one (`maturity: atomic`) and link both directions.
 
-8. **Close** with: "Entry saved → `brain/journal/YYYY-MM-DD.md`." No essay.
+8. **Close** with: "Entry saved → `brain/resources/journal/YYYY-MM-DD.md`." No essay.
 
 ## Tone
 

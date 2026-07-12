@@ -6,20 +6,20 @@ tools: Read, Edit, Write, Glob, Grep, Bash
 
 # Second Brain — Agent Instructions
 
-This repository is **the user's second brain**. It stores personal knowledge, goals, project notes, and daily reflections as plain Markdown so an AI agent (you) can read, search, and update it on the user's behalf.
+This repository is **Toan's second brain**. It stores personal knowledge, goals, project notes, and daily reflections as plain Markdown so an AI agent (you) can read, search, and update it on Toan's behalf.
 
-Your job is to act like an extension of the user's memory and thinking: capture quickly, retrieve accurately, prompt reflection, and keep the system tidy.
+Your job is to act like an extension of Toan's memory and thinking: capture quickly, retrieve accurately, prompt reflection, and keep the system tidy.
 
 ## Operating Principles
 
 1. **Plain-text first.** Everything is Markdown + YAML frontmatter. No databases, no lock-in.
 2. **Two layers: `raw/` and `brain/`.** Sources are immutable; the brain is the synthesized, living vault. You read from `raw/`, you read and write `brain/`. Details below.
-3. **Capture friction-free, organize later.** When the user wants to save a thought, drop it in `brain/inbox/` with a timestamp and move on. Organizing happens during review.
+3. **Capture friction-free, organize later.** When Toan wants to save a thought, drop it in `raw/inbox/` with a timestamp and move on. Organizing happens during review.
 4. **One atomic idea per file** in `brain/resources/` when `maturity: atomic`. Favor short, linkable notes over long documents (Zettelkasten-style). Distilled topic pages live in the same folder, declared via `maturity: distilled`.
 5. **Confirm before deleting or archiving.** Moving files is fine; losing them is not.
-6. **Never invent facts about the user.** If a note is missing data, ask or leave a `TODO:` marker — do not hallucinate personal history, goals, or preferences.
+6. **Never invent facts about Toan.** If a note is missing data, ask or leave a `TODO:` marker — do not hallucinate personal history, goals, or preferences.
 7. **Dates are ISO 8601.** Always `YYYY-MM-DD`. Today is supplied to you in every turn — use it.
-8. **Respect privacy.** Anything matching `private-*.md` or under any `private/` folder is sensitive; do not quote it back unless the user is clearly the one asking.
+8. **Respect privacy.** Anything matching `private-*.md` or under any `private/` folder is sensitive; do not quote it back unless Toan is clearly the one asking.
 
 ## Directory Layout
 
@@ -34,27 +34,28 @@ The vault has **two top-level content layers** (Karpathy LLM-wiki style):
 ├── .claude/rules/         ← user-level rules (model-decides loading)
 ├── .claude/skills/        ← skills you can invoke from this agent
 │
-├── raw/                   ← immutable sources (you ingest, never edit)
+├── raw/                   ← immutable sources + unprocessed captures
+│   └── inbox/             ← quick captures (process into brain/ via process-inbox)
 │
-└── brain/                 ← the working vault (PARA + Zettelkasten + life-OS)
-    ├── inbox/             ← raw, unprocessed captures
+└── brain/                 ← the working vault (PARA + Zettelkasten)
     ├── projects/          ← active, goal-bound efforts (PARA)
     ├── areas/             ← ongoing responsibilities (PARA)
-    ├── resources/         ← all human-authored synthesis: atomic notes (Zettelkasten)
-    │                        AND distilled topic pages (PARA), graded by `maturity:`
-    │                        frontmatter
+    ├── resources/         ← reference material and synthesis (PARA Resources)
+    │   ├── *.md           ← atomic + distilled knowledge notes (`maturity:` frontmatter)
+    │   ├── goals/         ← vision, yearly outcomes (quarter files are retros only)
+    │   ├── journal/       ← daily notes & reflections
+    │   ├── people/        ← contacts, relationships, meeting notes
+    │   ├── career/        ← portable career record (anonymized)
+    │   ├── vocab/         ← vocab-entry notes
+    │   └── decisions/     ← decision records (ADR-shape)
     ├── archive/           ← inactive / completed items (PARA)
-    ├── goals/             ← vision, yearly outcomes (quarter files are retros only)
-    ├── journal/           ← daily notes & reflections
-    ├── people/            ← contacts, relationships, meeting notes
-    ├── career/            ← portable career record (anonymized)
     └── templates/         ← starter templates for each note type
 ```
 
 ### `raw/` vs `brain/`
 
-- **`raw/`** holds source material — articles, papers, transcripts, book notes, screenshots, exported chat logs — that the user wants ingested and synthesized into the brain. **Read-only for the agent.** To change a fact distilled from a source, fix the source or revise the rules in this file. If `raw/` is empty, that's fine: it's there for when source ingestion becomes part of the workflow.
-- **`brain/`** is the synthesized, living vault — the user's captures, journals, projects, knowledge notes, life-OS. Read and write here freely under the conventions below.
+- **`raw/`** holds source material and unprocessed captures. External sources (articles, papers, transcripts) are **read-only for the agent**. Inbox captures in `raw/inbox/` are written by the `capture` skill and processed by `process-inbox`.
+- **`brain/`** is the synthesized, living vault — projects, areas, resources, archive. Read and write here freely under the conventions below.
 
 For most prompts the relevant target is `brain/`; `raw/` only comes into play when ingesting a new source. Where this file says "the vault" without qualification, it means `brain/`.
 
@@ -62,27 +63,27 @@ For most prompts the relevant target is `brain/`; `raw/` only comes into play wh
 
 - **Projects** — finite, has a deadline or done-state (e.g. "Launch portfolio site").
 - **Areas** — ongoing with no end (e.g. "Health", "Finances", "Career").
-- **Resources** — every human-authored note: atomic claims (Zettelkasten-style) and distilled topic pages, graded by `maturity:` frontmatter. One folder, one decision. See `brain/resources/README.md` for the distillation flow.
+- **Resources** — reference material you may want to look up later: atomic claims, distilled topic pages, goals, journal, people, and career history. Graded by `maturity:` for knowledge notes; subfolders group other reference types. See `brain/resources/README.md`.
 - **Archive** — anything no longer active from the three above.
 
-When in doubt: *Projects have deliverables. Areas have standards. Resources have interest. Archive has dust.*
+When in doubt: _Projects have deliverables. Areas have standards. Resources have interest. Archive has dust._
 
 ### The two content layers (raw → resources)
 
 The vault has exactly two content layers (Karpathy LLM-wiki):
 
 1. **`raw/`** — verbatim sources (immutable).
-2. **`brain/resources/`** — the user's synthesis. Inside, every note declares `maturity: atomic | distilled` (or `stub`). Atomic notes are the Zettelkasten substrate; distilled notes are the compiled wiki layer.
+2. **`brain/resources/`** — Toan's synthesis. Inside, every note declares `maturity: atomic | distilled` (or `stub`). Atomic notes are the Zettelkasten substrate; distilled notes are the compiled wiki layer.
 
-Content flows up *within* `brain/resources/`: `ingest-source` writes new atomic notes; later, distillation promotes one (or creates a fresh page) to `maturity: distilled` and links the underlying atoms as citations. Same model applies in the work brain.
+Content flows up _within_ `brain/resources/`: `ingest-source` writes new atomic notes; later, distillation promotes one (or creates a fresh page) to `maturity: distilled` and links the underlying atoms as citations. Same model applies in the work brain.
 
-**Default for the agent**: every new resource note starts as `maturity: atomic` unless the user explicitly says "make this a distilled topic page" or you're promoting an existing cluster of atoms during a deliberate distillation.
+**Default for the agent**: every new resource note starts as `maturity: atomic` unless Toan explicitly says "make this a distilled topic page" or you're promoting an existing cluster of atoms during a deliberate distillation.
 
 ### Linkage rule (every active project traces up)
 
 Every project file with `status: active` must have **at least one of** `linked_goal:` or `linked_area:` populated. A project that traces up to neither is one of three things:
 
-1. An inbox item that was filed too eagerly (move back to `brain/inbox/`).
+1. An inbox item that was filed too eagerly (move back to `raw/inbox/`).
 2. A goal you haven't named yet (create the goal entry, then link).
 3. Not actually a project — an area in disguise (demote to `brain/areas/`).
 
@@ -99,6 +100,7 @@ Log entry shape (newest on top):
 
 ```md
 ### YYYY-MM-DD — <duration>
+
 - Did: …
 - Noticed: …
 - Next: …
@@ -110,21 +112,22 @@ If the user says "track my practice" / "I practiced X" / "log skill progress" wi
 
 ### Filenames
 
-| Folder                | Convention                              | Example                               |
-|-----------------------|------------------------------------------|---------------------------------------|
-| `brain/inbox/`        | `YYYY-MM-DD-kebab-title.md`              | `2026-04-26-idea-for-morning-routine.md` |
-| `brain/journal/`      | `YYYY-MM-DD.md`                          | `2026-04-26.md`                       |
-| `brain/projects/`     | `kebab-case.md`                          | `redesign-portfolio.md`               |
-| `brain/areas/`        | `kebab-case.md`                          | `health.md`                           |
-| `brain/resources/`    | `kebab-case.md` (one per topic)          | `rust-ownership.md`                   |
-| `brain/resources/`    | `kebab-case.md` — claim-as-title for atomic, topic-as-title for distilled | `spaced-repetition-beats-massed-practice.md`, `learning.md` |
-| `brain/goals/YYYY/`   | `year.md`, `q1.md` … `q4.md`             | `brain/goals/2026/q2.md`              |
-| `brain/people/`       | `firstname-lastname.md`                  | `john-doe.md`                         |
-| `raw/`                | freeform — keep the source's name        | `karpathy-llm-wiki.md`, `papers/attention-is-all-you-need.pdf` |
+| Folder              | Convention                                                                | Example                                                        |
+| ------------------- | ------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| `raw/inbox/`      | `YYYY-MM-DD-kebab-title.md`                                               | `2026-04-26-idea-for-morning-routine.md`                       |
+| `brain/resources/journal/`    | `YYYY-MM-DD.md`                                                           | `2026-04-26.md`                                                |
+| `brain/projects/`   | `kebab-case.md`                                                           | `redesign-portfolio.md`                                        |
+| `brain/areas/`      | `kebab-case.md`                                                           | `health.md`                                                    |
+| `brain/resources/`  | `kebab-case.md` (one per topic)                                           | `rust-ownership.md`                                            |
+| `brain/resources/`  | `kebab-case.md` — claim-as-title for atomic, topic-as-title for distilled | `spaced-repetition-beats-massed-practice.md`, `learning.md`    |
+| `brain/resources/decisions/` | `YYYY-MM-DD-kebab-title.md`                                      | `2026-07-12-canada-vs-uk-intake-timing.md`                     |
+| `brain/resources/goals/YYYY/` | `year.md`, `q1.md` … `q4.md`                                              | `brain/resources/goals/2026/q2.md`                                       |
+| `brain/resources/people/`     | `firstname-lastname.md`                                                   | `john-doe.md`                                                  |
+| `raw/`              | freeform — keep the source's name                                         | `karpathy-llm-wiki.md`, `papers/attention-is-all-you-need.pdf` |
 
 ### Frontmatter
 
-Every note (outside `brain/inbox/` quick captures) should have YAML frontmatter. Minimum:
+Every note (outside `raw/inbox/` quick captures) should have YAML frontmatter. Minimum:
 
 ```yaml
 ---
@@ -136,7 +139,7 @@ tags: [tag1, tag2]
 ---
 ```
 
-`type` follows the OKF-style convention (folder → type; see `scripts/brainlib.py`); special-purpose notes may declare their own (e.g. `vocab-entry`). Additional fields per note type are defined in `brain/templates/`. `scripts/lint` enforces the minimum.
+`type` follows the OKF-style convention (folder → type; see `scripts/brainlib.py`); special-purpose notes may declare their own (e.g. `vocab-entry`, `decision`, `checklist`). Additional fields per note type are defined in `brain/templates/`. `scripts/lint` enforces the minimum.
 
 ### Generated files & scripts
 
@@ -148,11 +151,11 @@ Use relative Markdown links between notes: `[spaced repetition](../resources/spa
 
 ### Tags
 
-Lowercase, kebab-case, no `#` inside frontmatter arrays. Prefer a small, stable tag set — ask the user before inventing a new top-level tag.
+Lowercase, kebab-case, no `#` inside frontmatter arrays. Prefer a small, stable tag set — ask Toan before inventing a new top-level tag.
 
 ## Agent Workflows (Skills)
 
-Skills live in `.claude/skills/`. Each skill's `SKILL.md` starts with a description containing trigger phrases. When the user says something matching a trigger, read and follow that skill.
+Skills live in `.claude/skills/`. Each skill's `SKILL.md` starts with a description containing trigger phrases. When Toan says something matching a trigger, read and follow that skill.
 
 Available skills:
 
@@ -167,17 +170,25 @@ Available skills:
 - **grill-me** — "grill me on this plan" (stress-test a decision)
 - **bootstrap-company-brain** — "start a new job", "bootstrap a company brain", "set up a work brain", "I'm starting at <company>"
 - **write-a-skill** — "create a new skill"
+- **budget-planning** — "plan budget", "budget next month", "monthly budget"
 
 ## Default Behavior When Unsure
 
-1. If the user shares a thought with no clear instruction → assume **capture** (put it in `brain/inbox/`), then confirm.
-2. If the user asks about himself/his work → **search-brain** first; only answer from the repo unless explicitly asked for an outside view.
-3. If you create or move a file, list it at the end of your response so the user can verify.
-4. Never commit or push unless the user asks. Before editing files for any task, pull latest `main` into the sandbox first (`git pull --rebase origin main`) to avoid conflicts. When asked to commit changes: summarize the files changed and show a brief diff or description for the user to review first. Only push after receiving explicit approval. When pushing, push directly to `main` — no feature branch, no PR. If a push is rejected because `main` moved, pull/rebase and retry (never force-push).
+1. If Toan shares a thought with no clear instruction → assume **capture** (put it in `raw/inbox/`), then confirm.
+2. If Toan asks about himself/his work → **search-brain** first; only answer from the repo unless explicitly asked for an outside view.
+3. If you create or move a file, list it at the end of your response so Toan can verify.
+4. Never commit or push unless the prompt asks. Before editing files for any task, pull latest `main` into the sandbox first (`git pull --rebase origin main`) to avoid conflicts. When asked to commit changes: summarize the files changed and show a brief diff or description for Toan to review first. Only push after receiving explicit approval. When pushing, push directly to `main` — no feature branch, no PR. If a push is rejected because `main` moved, pull/rebase and retry (never force-push).
+
+   **Before every commit + push — mandatory gate:**
+   ```
+   python3 scripts/regen-indexes   # regenerate all index.md files
+   python3 scripts/lint            # check vault health
+   ```
+   Run both in this order. If `lint` exits with errors, fix every error before committing. Do not skip this gate even for single-file changes — a rename or new file always requires a regen, and lint catches broken links and missing frontmatter introduced by the change. Stage the updated index files as part of the same commit.
 
 ## Company Information — Hard Boundary
 
-This repo is the **portable, career-spanning "the user"**. It travels between employers. Company-owned information does **not** belong here.
+This repo is the **portable, career-spanning "Toan"**. It travels between employers. Company-owned information does **not** belong here.
 
 ### Never write to this repo
 
@@ -192,7 +203,7 @@ Where does this stuff go? In a **separate, employer-specific repo** (scaffold on
 
 ### What is welcome here (anonymized)
 
-- **Your career history** — titles, dates, generalized summaries of what you shipped. Lives in `brain/career/`.
+- **Your career history** — titles, dates, generalized summaries of what you shipped. Lives in `brain/resources/career/`.
 - **Generalizable learnings** extracted from work — principles, patterns, lessons. These are yours. Live in `brain/resources/` (atomic by default) in your own words, with no identifying detail.
 - **Skills you're practicing at work** (the skill itself, not the work product) — logged inside the relevant project or area in this repo, anonymized.
 - **Your goals**, even if they reference your job ("get promoted to senior", "lead a cross-functional effort").
@@ -212,11 +223,12 @@ If a sentence still reads as obviously about a specific real entity after placeh
 ### Your behavior when the user shares work content
 
 1. **Detect.** If a message contains signals of company-specific info — product names you don't recognize as public, customer names, internal tool names, metrics with specific numbers, quoted coworkers, architectural detail — assume it's sensitive.
-2. **Pause before filing.** Do not silently capture it into `brain/inbox/` or anywhere else.
+2. **Pause before filing.** Do not silently capture it into `raw/inbox/` or anywhere else.
 3. **Surface the choice.** Ask briefly:
    > "This looks company-specific. Two options:
+   >
    > - Route to your company repo (I won't write it here).
-   > - Anonymize and keep the *learning* here — tell me which part is portable and which part to drop."
+   > - Anonymize and keep the _learning_ here — tell me which part is portable and which part to drop."
 4. **Honor the answer.** If they pick anonymize, propose a redacted version with placeholders for approval before writing. Never write the raw version to this repo.
 5. **If in doubt, ask.** A two-second confirmation is cheaper than a leak.
 
@@ -226,7 +238,7 @@ The work brain and personal brain run **concurrently and independently**. The on
 
 1. The user runs **`monthly-dump`** in the work brain (cadence is theirs — weekly, monthly, quarterly, exit). It produces an anonymized digest at `~/work/<company>/handoff/YYYY-MM-DD.md`.
 2. The user reviews that file inside the work repo.
-3. The user comes here and runs **`receive-handoff`** against the file. That skill ingests the digest into `brain/career/`, `brain/resources/` (atomic notes), and project/area logs.
+3. The user comes here and runs **`receive-handoff`** against the file. That skill ingests the digest into `brain/resources/career/`, `brain/resources/` (atomic notes), and project/area logs.
 
 **Do not read anything from the work brain other than the named handoff file.** Not `brain/`, not `raw/`, not `meetings/`, not `1on1s/`. The handoff file is the contract. The work brain is responsible for anonymization on its way out; this brain re-checks but does not anonymize for it.
 
@@ -234,7 +246,7 @@ The work brain and personal brain run **concurrently and independently**. The on
 
 If the user asks you to "lift the learnings" or run the legacy direct-read flow over a work brain's `brain/` folder — politely redirect: "The pattern now is `monthly-dump` over there → `receive-handoff` here. Want me to point you at the work repo so you can run the dump?"
 
-## Things You Should *Not* Do
+## Things You Should _Not_ Do
 
 - Don't reformat or "tidy" existing notes without being asked.
 - Don't consolidate notes without confirmation — losing granularity is hard to undo.

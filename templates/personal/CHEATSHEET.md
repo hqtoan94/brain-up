@@ -12,16 +12,18 @@ Quick lookups while using the brain. For *what is this* see [`README.md`](README
 
 | If it is… | It goes to… |
 |---|---|
-| Random thought, no clear destination | `brain/inbox/` (via "capture: …") |
+| Random thought, no clear destination | `raw/inbox/` (via "capture: …") |
 | Finite effort with a deadline | `brain/projects/<slug>.md` |
 | Forever standard / responsibility | `brain/areas/<slug>.md` |
 | Atomic claim worth recalling | `brain/resources/<claim>.md` (`maturity: atomic`) |
 | Distilled topic page (compiled from atoms) | `brain/resources/<topic>.md` (`maturity: distilled`) |
-| Year-level outcome you want by Dec 31 | `brain/goals/YYYY/year.md` (entry, linked to a project) |
+| Year-level outcome you want by Dec 31 | `brain/resources/goals/YYYY/year.md` (entry, linked to a project) |
 | Skill being actively built | a `## Log` section inside the project (end-state) or area (ongoing) it serves |
-| Date-bound reflection | `brain/journal/YYYY-MM-DD.md` |
-| Person you want to remember | `brain/people/<firstname-lastname>.md` |
-| Career narrative (anonymized) | `brain/career/<years>-<role>.md` |
+| A choice being weighed or made | `brain/resources/decisions/YYYY-MM-DD-<slug>.md` (`status: proposed` while weighing, `decided` once made — ADR shape) |
+| Recurring weekly commitment (not one-off) | `brain/areas/weekly-recurring-tasks.md`, walked item-by-item during weekly review |
+| Date-bound reflection | `brain/resources/journal/YYYY-MM-DD.md` |
+| Person you want to remember | `brain/resources/people/<firstname-lastname>.md` |
+| Career narrative (anonymized) | `brain/resources/career/<years>-<role>.md` |
 | Done / inactive from above | `brain/archive/` (preserve filename, set `status:`) |
 | Source material to be ingested | `raw/` (immutable; agent reads, distills into `brain/resources/`) |
 | Anonymized handoff from a work brain | a single file you produced via `monthly-dump`; ingest with `receive-handoff` |
@@ -56,9 +58,9 @@ Placeholders: `$COMPANY`, `$PREVIOUS_COMPANY_N`, `$CLIENT`, `$PROJECT_X`. Specif
 | Daily | Capture freely. Optional: `journal` (morning intentions / evening reflection). |
 | Weekly | `weekly review` — full or lite. Never skip without rescheduling. Year goals + project rollup. |
 | As cadence allows | `receive-handoff` whenever a work brain has produced a fresh `handoff/YYYY-MM-DD.md`. |
-| Mid-quarter | Open `brain/goals/YYYY/qN.md`, fill the mid-quarter check-in. |
-| End of quarter | Open `brain/goals/YYYY/qN.md`, fill the retro. Open the next quarter's file. |
-| Yearly | Rewrite `brain/goals/YYYY/year.md`. Re-read `brain/goals/vision.md`; consider edits. |
+| Mid-quarter | Open `brain/resources/goals/YYYY/qN.md`, fill the mid-quarter check-in. |
+| End of quarter | Open `brain/resources/goals/YYYY/qN.md`, fill the retro. Open the next quarter's file. |
+| Yearly | Rewrite `brain/resources/goals/YYYY/year.md`. Re-read `brain/resources/goals/vision.md`; consider edits. |
 | Per job | Final `monthly-dump` over there → `receive-handoff` here → archive the work repo. |
 
 ## Agent vs. direct edit

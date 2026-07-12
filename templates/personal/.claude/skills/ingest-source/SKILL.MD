@@ -45,7 +45,7 @@ This is the inbound side of the Karpathy LLM-wiki pattern: `raw/` is immutable, 
 5. **Per user-approved item, one at a time:**
    - **Atomic claim** → create `brain/resources/<claim-slug>.md` from `brain/templates/resource.md` with `maturity: atomic`. Title is the claim as a sentence (per the convention in `brain/resources/README.md`). Body is your synthesis in the user's voice, not a verbatim quote. The `source:` field cites the file in `raw/` (relative path).
    - **Distilled topic page update** → if `brain/resources/<topic>.md` exists with `maturity: distilled`, append the source to its `## Sources` section and add the new atomic notes under `## Key ideas`. If the topic page doesn't exist, default to atomic — distillation happens later, not on first ingest.
-   - **Person note** → create or append to `brain/people/<name>.md`. Only if there's durable signal worth tracking. If unclear, skip and ask.
+   - **Person note** → create or append to `brain/resources/people/<name>.md`. Only if there's durable signal worth tracking. If unclear, skip and ask.
    - **Confirm each write** with a one-liner; move to next.
 
 6. **Backlink pass.** When done, every new atomic note's `source:` frontmatter cites `raw/<source>`. Any updated distilled page links to the new atomic notes. The source has gained inbound links from `brain/` — `lint-vault`'s un-ingested check now passes for it.
@@ -54,7 +54,7 @@ This is the inbound side of the Karpathy LLM-wiki pattern: `raw/` is immutable, 
    > **Ingested:** `raw/karpathy-llm-wiki.md`
    > - 3 new atomic notes in `brain/resources/`
    > - 1 distilled page updated (`brain/resources/personal-knowledge-management.md`)
-   > - 1 person note created (`brain/people/andrej-karpathy.md`)
+   > - 1 person note created (`brain/resources/people/andrej-karpathy.md`)
    > - Source unchanged in `raw/`.
 
 ## Rules

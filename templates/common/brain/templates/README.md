@@ -8,5 +8,6 @@ Copy these when starting a new note of each type. The agent uses them too.
 - `journal-daily.md`
 - `person.md`
 - `inbox-capture.md`
+- `decision.md` — ADR-shape decision record; lives in `brain/resources/decisions/`
 
 These are starting points, not straightjackets. Delete sections you don't need.

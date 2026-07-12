@@ -1,6 +1,6 @@
 ---
 name: bootstrap-company-brain
-description: One-shot setup for a new (or newly tracked) employer. Creates a private company brain at ~/work/<company>/ using brain-up, and adds an anonymized career stub to brain/career/ in this personal brain. Use when the user says "start a new job", "bootstrap a company brain", "set up a work brain", "I'm starting at <company>", or "new job at <company>".
+description: One-shot setup for a new (or newly tracked) employer. Creates a private company brain at ~/work/<company>/ using brain-up, and adds an anonymized career stub to brain/resources/career/ in this personal brain. Use when the user says "start a new job", "bootstrap a company brain", "set up a work brain", "I'm starting at <company>", or "new job at <company>".
 ---
 
 # Bootstrap Company Brain
@@ -8,14 +8,14 @@ description: One-shot setup for a new (or newly tracked) employer. Creates a pri
 One-time setup when the user starts (or starts tracking) a new employer. Two outputs:
 
 1. A new company brain at `~/work/<company>/` — scaffolded with `brain-up` (`up.sh --init --type company`).
-2. An anonymized career stub here — `brain/career/<start-year>-present-<role>.md` — using `brain/templates/career-role.md`.
+2. An anonymized career stub here — `brain/resources/career/<start-year>-present-<role>.md` — using `brain/templates/career-role.md`.
 
 The company brain is for company-owned content (real names allowed). The career stub is the only thing this personal brain learns about the new role, and it stays anonymized as `$COMPANY`.
 
 ## Process
 
 1. **Frame, then confirm.** Reply with:
-   > I'll create `~/work/<company>/` as the new company brain (real names allowed there) and add an anonymized career stub to this repo's `brain/career/` (`$COMPANY` placeholder, generic role title). OK?
+   > I'll create `~/work/<company>/` as the new company brain (real names allowed there) and add an anonymized career stub to this repo's `brain/resources/career/` (`$COMPANY` placeholder, generic role title). OK?
 
    Wait for explicit OK before continuing.
 
@@ -29,7 +29,7 @@ The company brain is for company-owned content (real names allowed). The career 
    - `<role-kebab>` — lowercase, hyphens (e.g. "Senior Software Engineer" → `senior-software-engineer`).
    - `<start-year>` — year of start date.
    - Company repo dir: `~/work/<company-kebab>/`.
-   - Career stub path: `brain/career/<start-year>-present-<role-kebab>.md`.
+   - Career stub path: `brain/resources/career/<start-year>-present-<role-kebab>.md`.
 
 4. **Pre-flight checks.** Stop and ask the user before clobbering anything:
    - `~/work/<company-kebab>/` already exists.
@@ -47,7 +47,7 @@ The company brain is for company-owned content (real names allowed). The career 
    - **Do not** add a git remote.
 
 6. **Create the personal-side career stub.**
-   - `cp brain/templates/career-role.md brain/career/<start-year>-present-<role-kebab>.md`.
+   - `cp brain/templates/career-role.md brain/resources/career/<start-year>-present-<role-kebab>.md`.
    - Fill the YAML frontmatter:
      - `title:` → role title (e.g. "Senior Software Engineer")
      - `created:` and `updated:` → today
@@ -71,7 +71,7 @@ The company brain is for company-owned content (real names allowed). The career 
      - Next: cd ~/work/<company-kebab> && git init   (no personal remote).
      - Then open it in Cursor on the work device.
 
-   Personal brain → brain/career/<start-year>-present-<role-kebab>.md
+   Personal brain → brain/resources/career/<start-year>-present-<role-kebab>.md
      - Anonymized as $COMPANY.
      - Lessons land here over time via the `receive-handoff` skill — the user runs
        `monthly-dump` in the work repo, reviews the handoff/YYYY-MM-DD.md file,

@@ -1,6 +1,6 @@
 ---
 name: receive-handoff
-description: Ingest an anonymized handoff/YYYY-MM-DD.md file produced by a work brain's monthly-dump skill, and write its sections into the personal brain (brain/career/, brain/resources/ as atomic notes, project/area logs). Use when the user says "receive handoff", "ingest handoff", "process the handoff from work", "lift the dump", or "ingest ~/work/<company>/handoff/...".
+description: Ingest an anonymized handoff/YYYY-MM-DD.md file produced by a work brain's monthly-dump skill, and write its sections into the personal brain (brain/resources/career/, brain/resources/ as atomic notes, project/area logs). Use when the user says "receive handoff", "ingest handoff", "process the handoff from work", "lift the dump", or "ingest ~/work/<company>/handoff/...".
 ---
 
 # Receive Handoff (Personal Side of the Work → Personal Bridge)
@@ -49,7 +49,7 @@ Default to option 1.
 
 ### 3. Identify the target role file
 
-The handoff describes work at one employer. Resolve which `brain/career/<role>.md` file it lands on:
+The handoff describes work at one employer. Resolve which `brain/resources/career/<role>.md` file it lands on:
 
 - Look for an active role file (`ended: present`).
 - If exactly one → use it. Confirm with user.
@@ -64,7 +64,7 @@ Each section in the handoff maps to a destination here. Walk them in order, **on
 
 For each bullet under `## Career`:
 - Show the bullet.
-- Suggest: append to `brain/career/<role>.md` under the appropriate sub-section (Wins, Scope changes, Mentoring, Shipped, etc. — let the user choose if ambiguous).
+- Suggest: append to `brain/resources/career/<role>.md` under the appropriate sub-section (Wins, Scope changes, Mentoring, Shipped, etc. — let the user choose if ambiguous).
 - Append a date prefix in front of the bullet if not already present: `- YYYY-MM (window_end month) — <bullet>`.
 - Confirm.
 
@@ -112,7 +112,7 @@ This is the only write into the work brain repo. Confirm with the user before do
 ### 7. Summarize
 
 > **Ingested:** `~/work/gridware/handoff/2026-04-30.md`
-> - Career: 3 bullets appended to `brain/career/2026-present-senior-software-engineer.md`
+> - Career: 3 bullets appended to `brain/resources/career/2026-present-senior-software-engineer.md`
 > - Resources (atomic): 4 new notes (2 from Knowledge, 2 from Decisions); 1 merged into existing `brain/resources/dual-write-before-cutover.md`
 > - Skill log: 1 entry on `brain/areas/engineering.md`
 > - Source stamped `status: ingested`

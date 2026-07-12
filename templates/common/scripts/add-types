@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
 """Add a `type:` field to every content note's frontmatter that lacks one.
 
-Idempotent migration. The type is derived from the note's top-level folder —
-see FOLDER_TYPES in brainlib.py. Notes without a frontmatter block (inbox
-captures) are left alone and reported.
+Idempotent migration. The type is derived from the note's folder — see
+FOLDER_TYPES, RESOURCE_SUBFOLDER_TYPES, and LEGACY_TOPLEVEL_TYPES in brainlib.py.
 
 Usage: scripts/add-types [--dry-run]
 """
 
 import sys
 
-from brainlib import FOLDER_TYPES, content_notes, read_note
+from brainlib import content_notes, note_type, read_note
 
 
 def main():
@@ -18,8 +17,8 @@ def main():
     added, skipped_no_fm, already = [], [], 0
 
     for path, folder in content_notes():
-        note_type = FOLDER_TYPES.get(folder)
-        if note_type is None:
+        inferred = note_type(path, folder)
+        if inferred is None:
             continue
         text, meta, _ = read_note(path)
         if meta is None:
@@ -28,7 +27,7 @@ def main():
         if "type" in meta:
             already += 1
             continue
-        new_text = text.replace("---\n", f"---\ntype: {note_type}\n", 1)
+        new_text = text.replace("---\n", f"---\ntype: {inferred}\n", 1)
         if not dry_run:
             path.write_text(new_text, encoding="utf-8")
         added.append(path)

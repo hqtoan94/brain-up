@@ -40,6 +40,17 @@ The version diff (your pin → latest) is the checklist of features to wire in.
 
 ## [Unreleased]
 
+## [0.2.1] — 2026-07-12
+
+### Fixed
+
+- **Personal init/upgrade no longer recreates legacy top-level folders.** Removed
+  stale `.gitkeep` placeholders from `templates/common/brain/{inbox,journal,people}/`
+  and `templates/personal/brain/{career,goals}/`. Company placeholders moved to
+  `templates/company/brain/`.
+- **`up.sh --init --type personal` prunes** empty legacy `brain/{inbox,goals,journal,people,career}/`
+  dirs after copy (skips any folder with real content notes).
+
 ## [0.2.0] — 2026-07-12
 
 **Breaking migration for personal brains.** Existing personal brains must move folders
@@ -117,6 +128,7 @@ inherits, plus the versioning mechanism itself.
 - **Company brain skills:** capture, daily-journal, process-inbox, weekly-review,
   monthly-dump — plus the work↔personal handoff boundary (`handoff/`).
 
-[Unreleased]: https://github.com/hqtoan94/brain-up/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/hqtoan94/brain-up/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/hqtoan94/brain-up/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/hqtoan94/brain-up/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/hqtoan94/brain-up/releases/tag/v0.1.0

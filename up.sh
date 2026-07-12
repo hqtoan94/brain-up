@@ -149,6 +149,23 @@ copy_template() {
   done < <(find "$src" -type f -print0)
 }
 
+# Remove legacy personal-brain scaffold dirs (pre-0.2.0) that only hold placeholders.
+# Safe: skips any folder that contains a real content note.
+prune_legacy_personal_scaffold() {
+  local target="$1"
+  local dir rel
+  for dir in inbox goals journal people career; do
+    rel="$target/brain/$dir"
+    [[ -d "$rel" ]] || continue
+    if find "$rel" -type f -name '*.md' ! -name 'README.md' ! -name 'index.md' -print -quit 2>/dev/null | grep -q .; then
+      echo "  keep     brain/$dir (has content notes — not removing)"
+      continue
+    fi
+    rm -rf "$rel"
+    echo "  remove   brain/$dir (legacy scaffold placeholder)"
+  done
+}
+
 # Print (relative) template files that already exist under dst -- i.e. the files
 # a --force would overwrite.
 list_overwrites() {
@@ -395,6 +412,11 @@ run_init_mode() {
   echo "Files"
   copy_template "$TEMPLATES_DIR/common" "$target" "$copy_mode"
   copy_template "$TEMPLATES_DIR/$INIT_TYPE" "$target" "$copy_mode"
+  if [[ "$INIT_TYPE" == "personal" ]]; then
+    echo
+    echo "Prune legacy personal scaffold"
+    prune_legacy_personal_scaffold "$target"
+  fi
   if [[ ${#COPIED_FILES[@]} -gt 0 ]]; then
     substitute_placeholders "$name" "$today" "${COPIED_FILES[@]}"
   fi

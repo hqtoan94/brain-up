@@ -40,6 +40,8 @@ The version diff (your pin → latest) is the checklist of features to wire in.
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-07-19
+
 ### Added
 
 - **Routines system.** New `templates/personal/routines/` folder with an
@@ -168,7 +170,8 @@ inherits, plus the versioning mechanism itself.
 - **Company brain skills:** capture, daily-journal, process-inbox, weekly-review,
   monthly-dump — plus the work↔personal handoff boundary (`handoff/`).
 
-[Unreleased]: https://github.com/hqtoan94/brain-up/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/hqtoan94/brain-up/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/hqtoan94/brain-up/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/hqtoan94/brain-up/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/hqtoan94/brain-up/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/hqtoan94/brain-up/releases/tag/v0.1.0

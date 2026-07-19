@@ -1,5 +1,5 @@
 ---
-cron: 0 8 * * *
+cron: 15 0 * * *
 ---
 
 # Vocab Practice — Daily Routine

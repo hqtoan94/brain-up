@@ -1,0 +1,222 @@
+#!/usr/bin/env bash
+# install — register a routine prompt with Claude Code or Cursor.
+#
+# Reads a routine .md file from this folder and installs it as a scheduled
+# trigger for the target tool.
+#
+#   Claude Code (web/remote):  creates a CCR routine via `claude` CLI
+#   Claude Code (local):       adds a crontab entry that runs `claude -p`
+#   Cursor:                    adds a crontab entry that runs `cursor --cli -p`
+#
+# Usage:
+#   routines/install vocab-practice            # auto-detect tool
+#   routines/install vocab-practice --claude   # force Claude Code
+#   routines/install vocab-practice --cursor   # force Cursor
+#   routines/install vocab-practice --cron "0 8 * * *"  # custom schedule
+#   routines/install --list                    # show installed routines
+#   routines/install --remove vocab-practice   # uninstall a routine
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
+BRAIN="$(cd "$SCRIPT_DIR/.." && pwd)"
+CRON_TAG="brain-routine"
+DEFAULT_CRON="0 8 * * *"  # daily at 8 AM
+
+# ── helpers ──────────────────────────────────────────────────────────────────
+
+die()   { echo "error: $*" >&2; exit 1; }
+info()  { echo "  $*"; }
+
+usage() {
+  cat <<'EOF'
+Usage: routines/install <routine-name> [options]
+
+Arguments:
+  <routine-name>    Name of a .md file in this folder (without extension)
+
+Options:
+  --claude          Force Claude Code as target
+  --cursor          Force Cursor as target
+  --cron "<expr>"   Custom cron schedule (default: "0 8 * * *" = daily 8 AM)
+  --list            List installed routines
+  --remove <name>   Remove an installed routine
+  -h, --help        Show this help
+
+Examples:
+  routines/install vocab-practice
+  routines/install vocab-practice --cron "0 7 * * 1-5"   # weekdays at 7 AM
+  routines/install --list
+  routines/install --remove vocab-practice
+EOF
+}
+
+detect_tool() {
+  if [[ -n "${CLAUDE_CODE_REMOTE:-}" ]] || [[ -n "${CCR_SESSION_ID:-}" ]]; then
+    echo "ccr"
+  elif command -v claude >/dev/null 2>&1; then
+    echo "claude"
+  elif command -v cursor >/dev/null 2>&1; then
+    echo "cursor"
+  else
+    echo "none"
+  fi
+}
+
+read_prompt() {
+  local file="$1"
+  # strip the markdown title line (# ...) — everything after is the prompt
+  sed '1{/^# /d;}' "$file"
+}
+
+cron_comment() {
+  echo "$CRON_TAG:$1"
+}
+
+# ── list ─────────────────────────────────────────────────────────────────────
+
+list_routines() {
+  echo "Installed routines ($CRON_TAG):"
+  echo
+  local found=false
+  if crontab -l 2>/dev/null | grep -q "$CRON_TAG"; then
+    crontab -l 2>/dev/null | grep "$CRON_TAG" | while IFS= read -r line; do
+      local name schedule
+      name="$(echo "$line" | sed "s/.*$CRON_TAG://" | sed 's/ *$//')"
+      schedule="$(echo "$line" | awk '{print $1,$2,$3,$4,$5}')"
+      info "$name  ($schedule)"
+    done
+    found=true
+  fi
+  if [[ "$found" == false ]]; then
+    info "(none)"
+  fi
+}
+
+# ── remove ───────────────────────────────────────────────────────────────────
+
+remove_routine() {
+  local name="$1"
+  local tag
+  tag="$(cron_comment "$name")"
+  if ! crontab -l 2>/dev/null | grep -qF "$tag"; then
+    die "routine '$name' is not installed"
+  fi
+  crontab -l 2>/dev/null | grep -vF "$tag" | crontab -
+  echo "Removed routine: $name"
+}
+
+# ── install via crontab ─────────────────────────────────────────────────────
+
+install_cron() {
+  local name="$1" cli="$2" schedule="$3" prompt_file="$4"
+  local tag prompt_escaped cmd
+
+  tag="$(cron_comment "$name")"
+  prompt_escaped="$(cat "$prompt_file")"
+
+  # remove previous entry for this routine, if any
+  if crontab -l 2>/dev/null | grep -qF "$tag"; then
+    crontab -l 2>/dev/null | grep -vF "$tag" | crontab -
+    info "replaced existing cron entry"
+  fi
+
+  cmd="cd $BRAIN && $cli -p \"\$(cat $prompt_file)\""
+
+  # append new entry
+  (crontab -l 2>/dev/null || true; echo "$schedule $cmd # $tag") | crontab -
+
+  echo
+  echo "Installed routine: $name"
+  info "tool:     $cli"
+  info "schedule: $schedule"
+  info "prompt:   $prompt_file"
+  echo
+  info "Manage with:"
+  info "  routines/install --list"
+  info "  routines/install --remove $name"
+  info "  crontab -e   (manual edit)"
+}
+
+# ── install via CCR instructions ─────────────────────────────────────────────
+
+install_ccr() {
+  local name="$1" schedule="$2" prompt_file="$3"
+
+  echo
+  echo "Installed routine: $name"
+  echo
+  echo "Claude Code Remote detected. To register this as a CCR routine,"
+  echo "ask Claude in your session:"
+  echo
+  echo "  Create a routine named \"$name\" with this prompt and schedule"
+  echo "  it at cron \"$schedule\". Enable push notifications."
+  echo "  Prompt:"
+  echo
+  sed 's/^/    /' "$prompt_file"
+  echo
+  echo "Or paste the prompt file path directly:"
+  echo "  $prompt_file"
+}
+
+# ── main ─────────────────────────────────────────────────────────────────────
+
+ROUTINE=""
+TOOL=""
+CRON="$DEFAULT_CRON"
+ACTION="install"
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --claude)  TOOL="claude"; shift ;;
+    --cursor)  TOOL="cursor"; shift ;;
+    --cron)    CRON="${2:-}"; [[ -z "$CRON" ]] && die "--cron requires an expression"; shift 2 ;;
+    --list)    ACTION="list"; shift ;;
+    --remove)  ACTION="remove"; ROUTINE="${2:-}"; [[ -z "$ROUTINE" ]] && die "--remove requires a name"; shift 2 ;;
+    -h|--help) usage; exit 0 ;;
+    -*)        die "unknown option: $1" ;;
+    *)         ROUTINE="$1"; shift ;;
+  esac
+done
+
+case "$ACTION" in
+  list)
+    list_routines
+    exit 0
+    ;;
+  remove)
+    remove_routine "$ROUTINE"
+    exit 0
+    ;;
+esac
+
+[[ -z "$ROUTINE" ]] && { usage; exit 1; }
+
+PROMPT_FILE="$SCRIPT_DIR/$ROUTINE.md"
+[[ -f "$PROMPT_FILE" ]] || die "routine file not found: $PROMPT_FILE"
+
+if [[ -z "$TOOL" ]]; then
+  TOOL="$(detect_tool)"
+fi
+
+echo "brain-up routine installer"
+echo "  brain:   $BRAIN"
+echo "  routine: $ROUTINE"
+echo "  source:  $PROMPT_FILE"
+
+case "$TOOL" in
+  ccr)
+    install_ccr "$ROUTINE" "$CRON" "$PROMPT_FILE"
+    ;;
+  claude)
+    install_cron "$ROUTINE" "claude" "$CRON" "$PROMPT_FILE"
+    ;;
+  cursor)
+    install_cron "$ROUTINE" "cursor" "$CRON" "$PROMPT_FILE"
+    ;;
+  none)
+    die "neither 'claude' nor 'cursor' CLI found in PATH. Install one first, or use --claude / --cursor to specify."
+    ;;
+  *)
+    die "unknown tool: $TOOL"
+    ;;
+esac

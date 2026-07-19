@@ -1,3 +1,7 @@
+---
+cron: 0 8 * * *
+---
+
 # Vocab Practice — Daily Routine
 
 Daily vocab practice.

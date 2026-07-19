@@ -20,7 +20,6 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 BRAIN="$(cd "$SCRIPT_DIR/.." && pwd)"
 CRON_TAG="brain-routine"
-DEFAULT_CRON="0 8 * * *"  # daily at 8 AM
 
 # ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -32,22 +31,29 @@ usage() {
 Usage: routines/install <routine-name> [options]
 
 Arguments:
-  <routine-name>    Name of a .md file in this folder (without extension)
+  <routine-name>    Name of a .md file in this folder (without extension).
+                    The file's YAML frontmatter `cron:` field sets the default
+                    schedule; --cron overrides it.
 
 Options:
   --claude          Force Claude Code as target
   --cursor          Force Cursor as target
-  --cron "<expr>"   Custom cron schedule (default: "0 8 * * *" = daily 8 AM)
+  --cron "<expr>"   Override the schedule from the routine file
   --list            List installed routines
   --remove <name>   Remove an installed routine
   -h, --help        Show this help
 
 Examples:
   routines/install vocab-practice
-  routines/install vocab-practice --cron "0 7 * * 1-5"   # weekdays at 7 AM
+  routines/install vocab-practice --cron "0 7 * * 1-5"   # override to weekdays 7 AM
   routines/install --list
   routines/install --remove vocab-practice
 EOF
+}
+
+parse_frontmatter_cron() {
+  local file="$1"
+  sed -n '/^---$/,/^---$/{ /^cron:/{ s/^cron:[[:space:]]*//; p; q; } }' "$file"
 }
 
 detect_tool() {
@@ -64,8 +70,8 @@ detect_tool() {
 
 read_prompt() {
   local file="$1"
-  # strip the markdown title line (# ...) — everything after is the prompt
-  sed '1{/^# /d;}' "$file"
+  # strip YAML frontmatter (---...---) if present, pass through the rest
+  awk 'BEGIN{fm=0} /^---$/{fm++; next} fm<2{next} {print}' "$file"
 }
 
 cron_comment() {
@@ -162,14 +168,14 @@ install_ccr() {
 
 ROUTINE=""
 TOOL=""
-CRON="$DEFAULT_CRON"
+CRON_OVERRIDE=""
 ACTION="install"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --claude)  TOOL="claude"; shift ;;
     --cursor)  TOOL="cursor"; shift ;;
-    --cron)    CRON="${2:-}"; [[ -z "$CRON" ]] && die "--cron requires an expression"; shift 2 ;;
+    --cron)    CRON_OVERRIDE="${2:-}"; [[ -z "$CRON_OVERRIDE" ]] && die "--cron requires an expression"; shift 2 ;;
     --list)    ACTION="list"; shift ;;
     --remove)  ACTION="remove"; ROUTINE="${2:-}"; [[ -z "$ROUTINE" ]] && die "--remove requires a name"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
@@ -193,6 +199,14 @@ esac
 
 PROMPT_FILE="$SCRIPT_DIR/$ROUTINE.md"
 [[ -f "$PROMPT_FILE" ]] || die "routine file not found: $PROMPT_FILE"
+
+# resolve schedule: --cron flag wins, then frontmatter cron:, then fail
+if [[ -n "$CRON_OVERRIDE" ]]; then
+  CRON="$CRON_OVERRIDE"
+else
+  CRON="$(parse_frontmatter_cron "$PROMPT_FILE")"
+  [[ -z "$CRON" ]] && die "no cron: in $PROMPT_FILE frontmatter and no --cron flag given"
+fi
 
 if [[ -z "$TOOL" ]]; then
   TOOL="$(detect_tool)"

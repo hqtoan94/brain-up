@@ -6,8 +6,8 @@ cron: 15 0 * * *
 
 Daily vocab practice.
 
-1. Pull latest, then glob `brain/resources/vocab/*.md` to build the full word list.
-2. Read `brain/resources/vocab-practice-log.md` (create it if missing — a table
+1. Pull latest, then glob `brain/resources/english/vocab/*.md` to build the full word list.
+2. Read `brain/resources/english/vocab-practice-log.md` (create it if missing — a table
    with columns: date | words | status | notes). Pick 5 words that have not
    appeared in the log in the last 14 days, preferring words never practiced
    and words previously marked as "misused"; pick randomly among eligible.

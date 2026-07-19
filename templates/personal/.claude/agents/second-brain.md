@@ -46,7 +46,9 @@ The vault has **two top-level content layers** (Karpathy LLM-wiki style):
     │   ├── journal/       ← daily notes & reflections
     │   ├── people/        ← contacts, relationships, meeting notes
     │   ├── career/        ← portable career record (anonymized)
-    │   ├── vocab/         ← vocab-entry notes
+    │   ├── english/       ← English language practice
+    │   │   ├── vocab/    ← vocab-entry notes
+    │   │   └── grammar/  ← grammar-entry notes
     │   └── decisions/     ← decision records (ADR-shape)
     ├── archive/           ← inactive / completed items (PARA)
     └── templates/         ← starter templates for each note type
@@ -139,7 +141,7 @@ tags: [tag1, tag2]
 ---
 ```
 
-`type` follows the OKF-style convention (folder → type; see `scripts/brainlib.py`); special-purpose notes may declare their own (e.g. `vocab-entry`, `decision`, `checklist`). Additional fields per note type are defined in `brain/templates/`. `scripts/lint` enforces the minimum.
+`type` follows the OKF-style convention (folder → type; see `scripts/brainlib.py`); special-purpose notes may declare their own (e.g. `vocab-entry`, `grammar-entry`, `decision`, `checklist`). Additional fields per note type are defined in `brain/templates/`. `scripts/lint` enforces the minimum.
 
 ### Generated files & scripts
 

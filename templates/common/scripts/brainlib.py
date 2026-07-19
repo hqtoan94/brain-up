@@ -24,12 +24,15 @@ FOLDER_TYPES = {
 }
 
 # brain/resources/<subfolder> -> note type (personal brain reference material)
+# supports nested paths (e.g. "english/vocab") — resource_subfolder() returns
+# the deepest matching key, so "english/vocab" wins over "english".
 RESOURCE_SUBFOLDER_TYPES = {
     "goals": "goal",
     "journal": "journal",
     "people": "person",
     "career": "career-role",
-    "vocab": "vocab-entry",
+    "english/vocab": "vocab-entry",
+    "english/grammar": "grammar-entry",
 }
 
 # legacy top-level folders (company brain, or pre-0.2.0 personal)
@@ -41,7 +44,16 @@ LEGACY_TOPLEVEL_TYPES = {
 }
 
 RESOURCE_INDEXED_SUBFOLDERS = ["goals", "journal", "people", "career"]
-RESOURCE_SUBFOLDERS = set(RESOURCE_SUBFOLDER_TYPES) | {"decisions"}
+
+def _subfolder_top_dirs():
+    """Top-level directory names that belong to typed subfolders (for skip logic)."""
+    dirs = set()
+    for key in RESOURCE_SUBFOLDER_TYPES:
+        dirs.add(key.split("/")[0])
+    dirs.add("decisions")
+    return dirs
+
+RESOURCE_SUBFOLDERS = _subfolder_top_dirs()
 COMPANY_INDEXED_FOLDERS = ["journal", "people", "meetings", "decisions", "1on1s"]
 
 SKIP_NAMES = {"README.md", "index.md"}
@@ -77,11 +89,24 @@ def indexed_folders():
 
 
 def resource_subfolder(path):
+    """Return the deepest RESOURCE_SUBFOLDER_TYPES key that matches path.
+
+    For brain/resources/english/vocab/foo.md -> "english/vocab"
+    For brain/resources/goals/2026/year.md   -> "goals"
+    """
     try:
         rel = path.relative_to(BRAIN / "resources")
     except ValueError:
         return None
-    return rel.parts[0] if rel.parts else None
+    if not rel.parts:
+        return None
+    # try longest match first (e.g. "english/vocab" before "english")
+    for depth in range(min(len(rel.parts) - 1, 3), 0, -1):
+        candidate = "/".join(rel.parts[:depth])
+        if candidate in RESOURCE_SUBFOLDER_TYPES or candidate == "decisions":
+            return candidate
+    top = rel.parts[0]
+    return top if top in RESOURCE_SUBFOLDERS else None
 
 
 def note_type(path, top_folder):

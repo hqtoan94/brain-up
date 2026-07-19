@@ -6,13 +6,12 @@ cron: 0 5 * * *
 
 Daily English grammar practice.
 
-1. Pull latest, then search `brain/resources/` for notes related to English
-   grammar (match by tags, title, or content — e.g. tense, clause, article,
-   preposition, conditional, subject-verb agreement, etc.).
-2. Read `brain/resources/grammar-practice-log.md` (create it if missing — a
-   table with columns: date | topics | status | notes). Pick 5 grammar
-   resources that have not appeared in the log in the last 14 days, preferring
-   resources never practiced and resources previously marked as "weak";
+1. Pull latest, then glob `brain/resources/english/grammar/*.md` to build the
+   full grammar topic list.
+2. Read `brain/resources/english/grammar-practice-log.md` (create it if
+   missing — a table with columns: date | topics | status | notes). Pick 5
+   grammar notes that have not appeared in the log in the last 14 days,
+   preferring notes never practiced and notes previously marked as "weak";
    pick randomly among eligible.
 3. In the chat, show a concise summary of each grammar resource — the title,
    the core rule or pattern, and one example from the note. Keep it brief

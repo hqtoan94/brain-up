@@ -39,8 +39,8 @@ def main():
             continue
         for key in REQUIRED_KEYS:
             if key not in meta:
-                # vocab entries follow the vocab-add skill's own schema (no `updated`)
-                if key == "updated" and meta.get("type") == "vocab-entry":
+                # vocab/grammar entries follow their own schema (no `updated`)
+                if key == "updated" and meta.get("type") in ("vocab-entry", "grammar-entry"):
                     continue
                 errors.append(f"{rel}: missing frontmatter key `{key}`")
 

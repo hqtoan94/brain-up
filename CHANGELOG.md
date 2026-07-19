@@ -40,6 +40,46 @@ The version diff (your pin → latest) is the checklist of features to wire in.
 
 ## [Unreleased]
 
+### Added
+
+- **Routines system.** New `templates/personal/routines/` folder with an
+  `install` script that registers routine prompts as scheduled triggers for
+  Claude Code (local + CCR) or Cursor via crontab. Each routine `.md` file
+  carries its own `cron:` schedule in YAML frontmatter; `--cron` overrides it.
+  Supports `--list` and `--remove` for management.
+- **`vocab-practice` routine.** Daily vocab quiz (default 7:15 AM GMT+7).
+  Picks 5 words from `brain/resources/english/vocab/` not seen in the last
+  14 days, sends a push notification, quizzes the user with example sentences,
+  assesses meaning/collocation/grammar, and logs progress with spaced
+  repetition (misused words resurface sooner).
+- **`grammar-practice` routine.** Daily grammar quiz (default 12:00 PM GMT+7).
+  Same structure as vocab-practice but draws from
+  `brain/resources/english/grammar/`.
+- **`grammar-entry` note type.** Individual grammar notes in
+  `brain/resources/english/grammar/`, exempt from `updated:` requirement
+  in lint (same as `vocab-entry`).
+
+### Changed
+
+- **English language resources restructured under `brain/resources/english/`.**
+  Vocab moves from `brain/resources/vocab/` to `brain/resources/english/vocab/`;
+  grammar is new at `brain/resources/english/grammar/`. `brainlib.py` now
+  supports nested subfolder type mappings (deepest match wins).
+- **`vocab-add` skill rewritten.** Creates individual files with proper
+  frontmatter at `brain/resources/english/vocab/<word>.md` instead of appending
+  to a single dictionary file. Adds duplicate check. All PTE references removed.
+- **`second-brain.mdc` rules** — trigger table cleaned of PTE reference.
+
+### Migration (existing brains with `brain/resources/vocab/`)
+
+```bash
+git mv brain/resources/vocab brain/resources/english/vocab
+mkdir -p brain/resources/english/grammar
+scripts/brain-upgrade --apply --force   # pull updated scripts & skills
+python3 scripts/regen-indexes
+python3 scripts/lint
+```
+
 ## [0.2.1] — 2026-07-12
 
 ### Fixed

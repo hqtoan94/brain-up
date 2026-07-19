@@ -12,14 +12,14 @@ The vault has its own operating contract at `~/second-brain/.claude/agents/secon
 
 Skills are intentionally **not** symlinked at user level (to keep every non-brain session's context small). When a trigger fires from a session whose CWD is not `~/second-brain/`:
 
-1. **Read** the relevant skill file at `~/second-brain/.claude/skills/<name>/SKILL.MD` (lookup table below). That file has the full step-by-step process.
+1. **Read** the relevant skill file at `~/second-brain/.claude/skills/<name>/SKILL.md` (lookup table below). That file has the full step-by-step process.
 2. The skill's instructions assume CWD = vault root. Use absolute paths or `cd ~/second-brain` before running file operations against the vault.
 3. Templates live at `~/second-brain/brain/templates/`.
 4. After writing into the vault, list the file paths in your reply so the user can verify.
 
 ## Triggers → Skills
 
-| User says… | Skill at `~/second-brain/.claude/skills/<name>/SKILL.MD` |
+| User says… | Skill at `~/second-brain/.claude/skills/<name>/SKILL.md` |
 |---|---|
 | "capture …", "remember this", "save to inbox", "jot this down" | `capture` |
 | "process my inbox", "sort inbox", "clean inbox" | `process-inbox` |
@@ -39,7 +39,7 @@ Quick-lookup cheat sheet: `~/second-brain/CHEATSHEET.md`.
 
 Company-specific content does **not** belong in the personal brain. Each employer gets its own repo at `~/work/<company>/` (created by `bootstrap-company-brain`). Each company repo has its own `AGENTS.md` with **different rules** (real names allowed there; anonymization rules don't apply inside it).
 
-Hard rule: **never write company-specific content** (employer/product/customer names, internal tools, quoted coworkers, comp/review content, business numbers, strategy/roadmap detail, credentials) into the personal brain. If the user pastes anything that looks company-specific while CWD is anywhere other than `~/work/<company>/`, pause and follow the **Sensitivity flow** in `~/second-brain/.claude/skills/capture/SKILL.MD`.
+Hard rule: **never write company-specific content** (employer/product/customer names, internal tools, quoted coworkers, comp/review content, business numbers, strategy/roadmap detail, credentials) into the personal brain. If the user pastes anything that looks company-specific while CWD is anywhere other than `~/work/<company>/`, pause and follow the **Sensitivity flow** in `~/second-brain/.claude/skills/capture/SKILL.md`.
 
 ## When the brain isn't installed on this machine
 

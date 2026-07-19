@@ -40,6 +40,19 @@ The version diff (your pin → latest) is the checklist of features to wire in.
 
 ## [Unreleased]
 
+## [0.3.1] — 2026-07-19
+
+### Fixed
+
+- **Skill files renamed to lowercase `SKILL.md`.** The `personal` template's
+  skill files (`bootstrap-company-brain`, `budget-planning`, `capture`,
+  `daily-journal`, `grill-me`, `ingest-book`, `ingest-source`, `lint-vault`,
+  `process-inbox`, `search-brain`, `vocab-add`, `weekly-review`,
+  `write-a-skill`) shipped with an uppercase `SKILL.MD` extension, which some
+  tools (including Claude Code's skill auto-discovery) don't recognize.
+  Renamed to `SKILL.md` and updated the remaining `SKILL.MD` references in
+  `second-brain.mdc`.
+
 ## [0.3.0] — 2026-07-19
 
 ### Added

@@ -40,6 +40,33 @@ The version diff (your pin → latest) is the checklist of features to wire in.
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-07-21
+
+**Breaking removal for personal brains.** English-practice was too
+user-specific for a general-purpose scaffold; existing personal brains
+adopting this release should follow the migration steps below.
+
+### Removed (breaking — personal brain)
+
+- **`vocab-add` skill** and the **`vocab-practice`** / **`grammar-practice`**
+  routines. These were specific to one user's English-learning habit, not a
+  general second-brain feature.
+- **`english/vocab` and `english/grammar` resource subfolder types** —
+  `vocab-entry` and `grammar-entry` are no longer recognized by
+  `scripts/brainlib.py` or exempted in `scripts/lint`.
+
+### Migration (personal brain, with `brain/resources/english/`)
+
+```bash
+# If you want to keep your existing vocab/grammar notes, move them
+# somewhere brainlib.py no longer special-cases, e.g.:
+git mv brain/resources/english/vocab brain/resources/vocab
+git mv brain/resources/english/grammar brain/resources/grammar
+# then re-tag `type:` in their frontmatter to a generic `resource`
+scripts/brain-upgrade --apply --force   # drops vocab-add skill + routines
+python3 scripts/lint
+```
+
 ## [0.3.1] — 2026-07-19
 
 ### Fixed

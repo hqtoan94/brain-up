@@ -9,12 +9,12 @@
 #   Cursor:                    adds a crontab entry that runs `cursor --cli -p`
 #
 # Usage:
-#   routines/install vocab-practice            # auto-detect tool
-#   routines/install vocab-practice --claude   # force Claude Code
-#   routines/install vocab-practice --cursor   # force Cursor
-#   routines/install vocab-practice --cron "0 8 * * *"  # custom schedule
-#   routines/install --list                    # show installed routines
-#   routines/install --remove vocab-practice   # uninstall a routine
+#   routines/install my-routine            # auto-detect tool
+#   routines/install my-routine --claude   # force Claude Code
+#   routines/install my-routine --cursor   # force Cursor
+#   routines/install my-routine --cron "0 8 * * *"  # custom schedule
+#   routines/install --list                # show installed routines
+#   routines/install --remove my-routine   # uninstall a routine
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
@@ -44,10 +44,10 @@ Options:
   -h, --help        Show this help
 
 Examples:
-  routines/install vocab-practice
-  routines/install vocab-practice --cron "0 7 * * 1-5"   # override to weekdays 7 AM
+  routines/install my-routine
+  routines/install my-routine --cron "0 7 * * 1-5"   # override to weekdays 7 AM
   routines/install --list
-  routines/install --remove vocab-practice
+  routines/install --remove my-routine
 EOF
 }
 

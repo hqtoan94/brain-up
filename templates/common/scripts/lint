@@ -39,9 +39,6 @@ def main():
             continue
         for key in REQUIRED_KEYS:
             if key not in meta:
-                # vocab/grammar entries follow their own schema (no `updated`)
-                if key == "updated" and meta.get("type") in ("vocab-entry", "grammar-entry"):
-                    continue
                 errors.append(f"{rel}: missing frontmatter key `{key}`")
 
         if folder == "resources" and is_knowledge_resource(path, meta) and meta.get("maturity") not in MATURITIES:

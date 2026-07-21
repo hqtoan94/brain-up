@@ -31,7 +31,6 @@ Skills are intentionally **not** symlinked at user level (to keep every non-brai
 | "grill me on this plan" | `grill-me` |
 | "start a new job", "bootstrap a company brain", "set up a work brain" | `bootstrap-company-brain` |
 | "create a new skill" | `write-a-skill` |
-| "add word", "add vocab", "add to dictionary", "define word" | `vocab-add` |
 
 Quick-lookup cheat sheet: `~/second-brain/CHEATSHEET.md`.
 

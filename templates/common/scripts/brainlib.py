@@ -24,15 +24,13 @@ FOLDER_TYPES = {
 }
 
 # brain/resources/<subfolder> -> note type (personal brain reference material)
-# supports nested paths (e.g. "english/vocab") — resource_subfolder() returns
-# the deepest matching key, so "english/vocab" wins over "english".
+# supports nested paths (e.g. "foo/bar") — resource_subfolder() returns
+# the deepest matching key, so "foo/bar" wins over "foo".
 RESOURCE_SUBFOLDER_TYPES = {
     "goals": "goal",
     "journal": "journal",
     "people": "person",
     "career": "career-role",
-    "english/vocab": "vocab-entry",
-    "english/grammar": "grammar-entry",
 }
 
 # legacy top-level folders (company brain, or pre-0.2.0 personal)
@@ -91,8 +89,7 @@ def indexed_folders():
 def resource_subfolder(path):
     """Return the deepest RESOURCE_SUBFOLDER_TYPES key that matches path.
 
-    For brain/resources/english/vocab/foo.md -> "english/vocab"
-    For brain/resources/goals/2026/year.md   -> "goals"
+    For brain/resources/goals/2026/year.md -> "goals"
     """
     try:
         rel = path.relative_to(BRAIN / "resources")
@@ -100,7 +97,7 @@ def resource_subfolder(path):
         return None
     if not rel.parts:
         return None
-    # try longest match first (e.g. "english/vocab" before "english")
+    # try longest match first (nested subfolder keys win over their parent)
     for depth in range(min(len(rel.parts) - 1, 3), 0, -1):
         candidate = "/".join(rel.parts[:depth])
         if candidate in RESOURCE_SUBFOLDER_TYPES or candidate == "decisions":

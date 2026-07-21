@@ -191,7 +191,7 @@ templates/
 │                .claude/skills/   capture · daily-journal · process-inbox · weekly-review
 │                                  search-brain · lint-vault · ingest-source · ingest-book
 │                                  grill-me · bootstrap-company-brain · receive-handoff
-│                                  write-a-skill · vocab-add
+│                                  write-a-skill
 │                brain/goals/, brain/career/, career-role template
 └── company/     AGENTS.md + CHEATSHEET.md
                  .claude/agents/work-brain.md     (work brain contract + handoff ritual)
